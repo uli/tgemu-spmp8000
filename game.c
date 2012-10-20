@@ -37,28 +37,6 @@ void (*lcd_clear)(void); // actually returns BitBlt_hw retval, but that is alway
   fs_write(fd, buf, strlen(buf), &res); \
 }
 
-int is_valid_arm_insn(uint32_t insn, int unconditional_only)
-{
-	if (insn == 0xe12fff1e) /* BX LR */
-	  return 1;
-	if (/* illegal insns */
-	    (insn & 0x0e1000f0) == 0x000000d0 ||
-	    (insn & 0x0e1000f0) == 0x000000f0 ||
-	    (insn & 0x0e000010) == 0x06000000 ||
-	    /* unpredictable insns */
-	    (insn & 0x0e700000) == 0x08600000 ||
-	    (insn & 0x0e700000) == 0x08700000 ||
-	    /* these are legal, but unlikely to actually occur in legit code */
-	    insn == 0 || insn == 0xffffffffU ||
-	    /* in practice, no function ever starts with one or two conditional
-	       insns */
-	    ((insn & 0xf0000000) != 0xe0000000 && unconditional_only)
-	    ) {
-	  return 0;
-	}
-	return 1;
-}
-
 sound_params_t sp;
 void update_sound(int off)
 {
@@ -120,67 +98,6 @@ int main()
 #endif
 
 	int res;
-#if 0
-	fs_open("dump.bin", FS_O_CREAT|FS_O_WRONLY|FS_O_TRUNC, &fd);
-	//fs_write(fd, "Huhu!\n", 6, &res);
-	fs_write(fd, (void *)0x280000, 0x480000, &res);
-	fs_close(fd);
-	fs_open("ftab.bin", FS_O_CREAT|FS_O_WRONLY|FS_O_TRUNC, &fd);
-	fs_write(fd, (void *)ftab, 0x150, &res);
-	fs_close(fd);
-	
-	fs_open("diag.txt", FS_O_CREAT|FS_O_WRONLY|FS_O_TRUNC, &fd);
-	uint32_t *mem = (uint32_t *)0x280000;
-	int fpointers_found = 0;
-	int null_pointers_found = 0;
-	int trailing_null = 0;
-#define READ32(x) ( *((uint32_t *)(x)) )
-	while (mem < (uint32_t *)0x800000) {
-		if (*mem >= 0x280000 && *mem < 0xa00000 &&
-		    is_valid_arm_insn(READ32(*mem), 1) &&
-		    is_valid_arm_insn(READ32((*mem)+4), 0)
-		   ) {
-			fs_fprintf(fd, "%08x: OS pointer %08x\n", (uint32_t)mem, *mem);
-			fpointers_found++;
-			trailing_null = 0;
-		}
-		else if (*mem == 0 && fpointers_found) {
-			fs_fprintf(fd, "%08X: NULL pointer\n", (uint32_t)mem);
-			null_pointers_found++;
-			trailing_null++;
-		}
-		else {
-			if (fpointers_found >= 4) {
-				uint32_t *start = mem - fpointers_found;
-				fs_fprintf(fd, "%08X - %08X: found %d pointers in a row", (uint32_t)start, ((uint32_t)mem) - 4, fpointers_found);
-				int avg_dist = 0;
-				while (start < mem) {
-					if (*start) {
-						int dist = ((uint32_t)start) - *start;
-						if (dist < 0)
-							avg_dist += -dist;
-						else
-							avg_dist += dist;
-					}
-					start++;
-				}
-				avg_dist /= fpointers_found;
-				fs_fprintf(fd, ", average distance %d bytes (%d insns)", avg_dist, avg_dist / 4);
-				if (avg_dist > 1024 && (null_pointers_found - trailing_null) <= fpointers_found / 2) {
-					fs_fprintf(fd, " FUNTABLE\n");
-				}
-				else {
-					fs_fprintf(fd, "\n");
-				}
-			}
-			fpointers_found = 0;
-			null_pointers_found = 0;
-		}
-		mem++;
-	}
-	fs_close(fd);
-	//return 0;
-#endif
 	
 	fs_open("fb.txt", FS_O_CREAT|FS_O_WRONLY|FS_O_TRUNC, &fd);
 	fs_fprintf(fd, "Framebuffer %08x, shadow buffer %08x\n", getLCDFrameBuffer(), getLCDShadowBuffer());
