@@ -139,8 +139,9 @@ int main()
 		palette[i] = RGBR(r >> 1, g, b >> 1);
 		fs_fprintf(fd, "palette raw %02x r %d g %d b %d rgb %04x\n", i, r, g, b, palette[i]);
 	}
-    memset(getLCDFrameBuffer(), 0, getLCDHeight() * getLCDWidth());
-    memset(getLCDShadowBuffer(), 0, getLCDHeight() * getLCDWidth());
+    memset(getLCDFrameBuffer(), 0, getLCDHeight() * getLCDWidth() * 2);
+    memset(getLCDShadowBuffer(), 0, getLCDHeight() * getLCDWidth() * 2);
+
     bitmap.width = getLCDWidth();
     bitmap.height = getLCDHeight();
     bitmap.depth = 8;
