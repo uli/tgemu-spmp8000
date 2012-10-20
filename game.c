@@ -170,7 +170,6 @@ int main()
 	system_init(44100);
 	fs_fprintf(fd, "system_reset\n");
 	system_reset();
-	fs_fprintf(fd, "malloc test %08x\n", malloc(1024));
 	fs_fprintf(fd, "snd.enabled %d, buffer size %d\n", snd.enabled, snd.buffer_size);
 	fs_close(fd);
 	//return 0;
@@ -221,7 +220,7 @@ int main()
 			fb[i] = RGB(col % 256, col2 % 256,0); //i;
 		}
 #endif
-#if 1
+#if 0
 		for (i = 0; i < 65536; i++) {
 			fb[i + getLCDWidth() * 100] = i;
 		}
