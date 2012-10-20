@@ -37,6 +37,8 @@ void (*lcd_clear)(void); // actually returns BitBlt_hw retval, but that is alway
   fs_write(fd, buf, strlen(buf), &res); \
 }
 
+#define FRAMESKIP 2
+
 sound_params_t sp;
 void update_sound(int off)
 {
@@ -105,7 +107,7 @@ int main()
 	fs_fprintf(fd, "LCD format %08x\n", getLCDBuffFormat());
 	uint16_t sound_buf[44100 * 2]; //735 * 2];//367 * 2];
 	sp.buf = sound_buf;
-	sp.buf_size = 735 * 4;// * 2;//367 * 2;
+	sp.buf_size = 735 * (FRAMESKIP + 1);// * 2;//367 * 2;
 	sp.rate = 22050;
 	sp.channels = 1; //2;
 	sp.depth = 0;
@@ -224,14 +226,6 @@ int main()
 			fb[i + getLCDWidth() * 100] = i;
 		}
 #endif
-#if 0
-		if (skip) {
-			skip = 0;
-			system_frame(1);
-		}
-		else {
-			skip = 1;
-#endif
 			input.pad[0] = 0;
 			    if(keys.key2 & KEY_UP)     input.pad[0] |= INPUT_UP;
 			    if(keys.key2 & KEY_DOWN)   input.pad[0] |= INPUT_DOWN;
@@ -244,16 +238,15 @@ int main()
 				
 			//bitmap.data = (uint8 *)getLCDShadowBuffer();
 			//uint16_t *fb = getLCDShadowBuffer();
-			system_frame(1);
-			update_sound(0);
-			system_frame(1);
-			update_sound(1);
-			system_frame(1);
-			update_sound(2);
+                        for (i = 0; i < FRAMESKIP; i++) {
+        			system_frame(1);
+        			update_sound(i);
+                        }
 #ifndef RENDER_8BPP
                         bitmap.data = getLCDShadowBuffer();
 #endif
 			system_frame(0);
+			update_sound(i);
 #ifdef RENDER_8BPP
 			uint8_t *o = bitmap.data;
 			for (i = 0; i < bitmap.height; i++) {
@@ -274,8 +267,6 @@ int main()
 				memset(fb + bitmap.width * 260 + i * 10, (keys.key2 & (1 << i)) ? 0xff : 0, 20);
 				memset(fb + bitmap.width * 265 + i * 10, (keys.key1 & (1 << i)) ? 0xf0 : 0, 20);
 			}
-			
-			update_sound(3);
 			
 			lcd_flip();
 			emuIfSoundPlay(&sp);
