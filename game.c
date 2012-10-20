@@ -126,6 +126,7 @@ int main()
 		return 0;
 	}
 
+#ifdef RENDER_8BPP
 #define RGB(r, g, b) ( (((r) >> 3) << 11) | (((g) >> 2) << 5) | ((b) >> 3) )
 #define RGBR(r, g, b) ( (((r)) << 11) | (((g)) << 5) | ((b)) )
 	uint16_t palette[256];
@@ -139,16 +140,24 @@ int main()
 		palette[i] = RGBR(r >> 1, g, b >> 1);
 		fs_fprintf(fd, "palette raw %02x r %d g %d b %d rgb %04x\n", i, r, g, b, palette[i]);
 	}
+#endif
     memset(getLCDFrameBuffer(), 0, getLCDHeight() * getLCDWidth() * 2);
     memset(getLCDShadowBuffer(), 0, getLCDHeight() * getLCDWidth() * 2);
 
     bitmap.width = getLCDWidth();
     bitmap.height = getLCDHeight();
+#ifdef RENDER_8BPP
     bitmap.depth = 8;
     bitmap.granularity = (bitmap.depth >> 3);
     uint8_t bitmap_buf[bitmap.width * bitmap.height * bitmap.granularity];
     memset(bitmap_buf, 0, bitmap.width * bitmap.height * bitmap.granularity);
     bitmap.data = bitmap_buf; //getLCDShadowBuffer(); //bitmap_buf;
+#else
+    bitmap.depth = 16;
+    bitmap.granularity = (bitmap.depth >> 3);
+    bitmap.data = getLCDShadowBuffer();
+#endif
+    
     bitmap.pitch = (bitmap.width * bitmap.granularity);
     bitmap.viewport.w = 256;
     bitmap.viewport.h = 240;
@@ -241,8 +250,12 @@ int main()
 			update_sound(1);
 			system_frame(1);
 			update_sound(2);
-			uint8_t *o = bitmap.data;
+#ifndef RENDER_8BPP
+                        bitmap.data = getLCDShadowBuffer();
+#endif
 			system_frame(0);
+#ifdef RENDER_8BPP
+			uint8_t *o = bitmap.data;
 			for (i = 0; i < bitmap.height; i++) {
 				int j;
 				for (j = 0; j < bitmap.width; j++) {
@@ -251,6 +264,7 @@ int main()
 				fb += bitmap.width;
 				o += bitmap.width;
 			}
+#endif
 			//memcpy(getLCDShadowBuffer(), bitmap_buf, getLCDWidth() * getLCDHeight());//sizeof(bitmap_buf));
 			//for (i = 0; i < 256; i++) {
 			//	memcpy(getLCDShadowBuffer() + i * getLCDWidth(), bitmap_buf + i * (32 + 512 + 32) * 2 + 64, 480 * 2);
