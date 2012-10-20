@@ -30,6 +30,7 @@ uint16_t *(*getLCDFrameBuffer)(void);
 void (*setLCDFrameBuffer)(uint16_t *fb); // educated guess
 void (*lcd_flip)(void);
 void (*lcd_clear)(void); // actually returns BitBlt_hw retval, but that is always 0
+int (*NativeGE_getKeyInput)(key_data_t *) = (void *)0x326cf4;
 
 #define fs_fprintf(fd, x...) { \
   char buf[256]; int res; \
@@ -262,9 +263,12 @@ int main()
 			//	memcpy(getLCDShadowBuffer() + i * getLCDWidth(), bitmap_buf + i * (32 + 512 + 32) * 2 + 64, 480 * 2);
 			//}
 			fb = getLCDShadowBuffer();
+			key_data_t nkeys;
+			NativeGE_getKeyInput(&nkeys);
 			for (i = 0; i < 32; i++) {
 				memset(fb + bitmap.width * 260 + i * 10, (keys.key2 & (1 << i)) ? 0xff : 0, 20);
 				memset(fb + bitmap.width * 265 + i * 10, (keys.key1 & (1 << i)) ? 0xf0 : 0, 20);
+				memset(fb + bitmap.width * 270 + i * 10, (nkeys.key2 & (1 << i)) ? 0x0f : 0, 20);
 			}
 			
 			lcd_flip();
