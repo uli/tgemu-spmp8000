@@ -14,8 +14,6 @@
 extern int sprintf(char *__s, const char *format, ...);
 #endif
 
-void draw_string(uint8_t font_id, uint16_t x, uint16_t y, char *str);
-void draw_string_centered(uint8_t font_id, uint16_t y, char *str);
 extern void **ftab;
 uint16_t *(*int_get_framebuffer)(void);
 uint16_t *(*int_get_shadowbuffer)(void);
@@ -43,8 +41,6 @@ void update_sound(int off)
 {
         int i;
         for (i = 0; i < snd.buffer_size; i++) {
-            //sp.buf[i * 2 + soundcount * snd.buffer_size * 2] = snd.buffer[0][i];
-            //sp.buf[i * 2 + soundcount * snd.buffer_size * 2 + 1] = snd.buffer[1][i];
             sp.buf[i + off * snd.buffer_size] = snd.buffer[1][i] >> 8;
         }
 }
@@ -53,9 +49,6 @@ int main()
 {
 	int i;
 	gfx_rect_t rect;
-	uint32_t color;
-	uint8_t   font_id, res_type;
-	uint8_t   img_id;
 	int fd;
 	key_data_t keys, okeys;
 
@@ -74,27 +67,11 @@ int main()
 	//setLCDShadowBuffer
 	getLCDFrameBuffer = gDisplayDev[9];
 
-	gfx_init(NULL, 0);
 
 	rect.x = 0;
 	rect.y = 0;
 	rect.width = 480;
 	rect.height = 272;
-
-	gfx_set_framebuffer(rect.width, rect.height);
-	gfx_set_display_screen(&rect);//320, 240);
-
-	// pure black
-	color = MAKE_RGB(255,0,0);
-	gfx_enable_feature(3);
-	gfx_set_fgcolor(&color);
-	gfx_set_colorrop(COLOR_ROP_NOP);
-	gfx_fillrect(&rect);
-
-#if 0
-	// load an image
-	if (gfx_load_image(&font_img, &font_id) != 0) return 0;
-#endif
 
 	int res;
 	
@@ -114,8 +91,6 @@ int main()
 	okeys.key1 = 0;
 	okeys.key2 = 1;
 	i=0;
-	uint32_t col = 0;
-	uint32_t col2 = 0;
 	
 	fs_fprintf(fd, "loading ROM\n");
 	res = load_rom("pce.pce", 0, 0);
@@ -171,24 +146,9 @@ int main()
 	fs_close(fd);
 	//return 0;
 	
-	int format = getLCDBuffFormat();
-	int soundcount = 0;
 	while (1) {
 		get_keys(&keys);
 
-		if (keys.key1 != okeys.key1) {
-			//break;
-		}
-		
-		if (keys.key2 != okeys.key2) {
-			//break;
-		}
-		if (keys.key2 & KEY_LEFT) {
-			col2 -= 4;
-		}
-		else if (keys.key2 & KEY_RIGHT) {
-			col2 += 4;
-		}
 #if 0
 		if ((keys.key2 & KEY_DOWN) && !(okeys.key2 & KEY_DOWN)) {
 			format++;
@@ -208,18 +168,6 @@ int main()
 			}
 			emuIfSoundPlay(&sp);
 			//emuIfSoundPlay(&sp);
-		}
-#endif
-		uint16_t *fb;
-		fb = getLCDShadowBuffer();
-#if 0
-		for (i = 0; i < getLCDWidth() * getLCDHeight(); i++) {
-			fb[i] = RGB(col % 256, col2 % 256,0); //i;
-		}
-#endif
-#if 0
-		for (i = 0; i < 65536; i++) {
-			fb[i + getLCDWidth() * 100] = i;
 		}
 #endif
 			input.pad[0] = 0;
@@ -254,11 +202,7 @@ int main()
 				o += bitmap.width;
 			}
 #endif
-			//memcpy(getLCDShadowBuffer(), bitmap_buf, getLCDWidth() * getLCDHeight());//sizeof(bitmap_buf));
-			//for (i = 0; i < 256; i++) {
-			//	memcpy(getLCDShadowBuffer() + i * getLCDWidth(), bitmap_buf + i * (32 + 512 + 32) * 2 + 64, 480 * 2);
-			//}
-			fb = getLCDShadowBuffer();
+			uint16_t *fb = getLCDShadowBuffer();
 			key_data_t nkeys;
 			NativeGE_getKeyInput(&nkeys);
 			for (i = 0; i < 32; i++) {
@@ -272,13 +216,8 @@ int main()
 #if 0
 		}
 #endif
-		col += 8;
 		okeys = keys;
 	}
-
-#if 0
-	gfx_free_image(font_id);
-#endif
 
 	return 0;
 }
