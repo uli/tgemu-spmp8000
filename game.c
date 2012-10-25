@@ -67,6 +67,16 @@ int main()
 	//setLCDShadowBuffer
 	getLCDFrameBuffer = gDisplayDev[9];
 
+	graph_params_t gp;
+	/* XXX: This should be 512, not 400. */
+	gp.pixels = malloc(400 * 256 * 2);
+	gp.width = 400;
+	gp.height = 256;
+	gp.unknown_flag = 0;
+	gp.src_clip_x = 0x20;
+	gp.src_clip_y = 0;
+	gp.src_clip_w = 256;
+	gp.src_clip_h = 240;
 
 	rect.x = 0;
 	rect.y = 0;
@@ -76,6 +86,8 @@ int main()
 	int res;
 	
 	fs_open("fb.txt", FS_O_CREAT|FS_O_WRONLY|FS_O_TRUNC, &fd);
+	res = emuIfGraphInit(&gp);
+	fs_fprintf(fd, "emuIfGraphInit (%08x) returns %08x\n", (uint32_t)emuIfGraphInit, res);
 	fs_fprintf(fd, "Framebuffer %08x, shadow buffer %08x\n", getLCDFrameBuffer(), getLCDShadowBuffer());
 	fs_fprintf(fd, "Width %d, Height %d\n", getLCDWidth(), getLCDHeight());
 	fs_fprintf(fd, "LCD format %08x\n", getLCDBuffFormat());
@@ -118,8 +130,8 @@ int main()
     memset(getLCDFrameBuffer(), 0, getLCDHeight() * getLCDWidth() * 2);
     memset(getLCDShadowBuffer(), 0, getLCDHeight() * getLCDWidth() * 2);
 
-    bitmap.width = getLCDWidth();
-    bitmap.height = getLCDHeight();
+    bitmap.width = 400;
+    bitmap.height = 256;
 #ifdef RENDER_8BPP
     bitmap.depth = 8;
     bitmap.granularity = (bitmap.depth >> 3);
@@ -129,7 +141,7 @@ int main()
 #else
     bitmap.depth = 16;
     bitmap.granularity = (bitmap.depth >> 3);
-    bitmap.data = getLCDShadowBuffer();
+    bitmap.data = (uint8 *)gp.pixels;
 #endif
     
     bitmap.pitch = (bitmap.width * bitmap.granularity);
@@ -187,7 +199,7 @@ int main()
         			update_sound(i);
                         }
 #ifndef RENDER_8BPP
-                        bitmap.data = getLCDShadowBuffer();
+                bitmap.data = (uint8 *)gp.pixels;
 #endif
 			system_frame(0);
 			update_sound(i);
@@ -211,11 +223,12 @@ int main()
 				memset(fb + bitmap.width * 270 + i * 10, (nkeys.key2 & (1 << i)) ? 0x0f : 0, 20);
 			}
 			
-			lcd_flip();
 			emuIfSoundPlay(&sp);
 #if 0
 		}
 #endif
+                if (emuIfGraphShow() < 0)
+                        return 0;
 		okeys = keys;
 	}
 
