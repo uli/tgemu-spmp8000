@@ -31,9 +31,9 @@ void (*lcd_clear)(void); // actually returns BitBlt_hw retval, but that is alway
 int (*NativeGE_getKeyInput)(key_data_t *) = (void *)0x326cf4;
 
 #define fs_fprintf(fd, x...) { \
-  char buf[256]; int res; \
+  char buf[256]; int _res; \
   sprintf(buf, x); \
-  fs_write(fd, buf, strlen(buf), &res); \
+  fs_write(fd, buf, strlen(buf), &_res); \
 }
 
 #define FRAMESKIP 2
