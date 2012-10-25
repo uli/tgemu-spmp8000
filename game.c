@@ -127,8 +127,6 @@ int main()
 		fs_fprintf(fd, "palette raw %02x r %d g %d b %d rgb %04x\n", i, r, g, b, palette[i]);
 	}
 #endif
-    memset(getLCDFrameBuffer(), 0, getLCDHeight() * getLCDWidth() * 2);
-    memset(getLCDShadowBuffer(), 0, getLCDHeight() * getLCDWidth() * 2);
 
     bitmap.width = 400;
     bitmap.height = 256;
