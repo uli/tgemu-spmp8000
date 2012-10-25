@@ -180,50 +180,50 @@ int main()
 			//emuIfSoundPlay(&sp);
 		}
 #endif
-			input.pad[0] = 0;
-			    if(keys.key2 & KEY_UP)     input.pad[0] |= INPUT_UP;
-			    if(keys.key2 & KEY_DOWN)   input.pad[0] |= INPUT_DOWN;
-			    if(keys.key2 & KEY_LEFT)   input.pad[0] |= INPUT_LEFT;
-			    if(keys.key2 & KEY_RIGHT)  input.pad[0] |= INPUT_RIGHT;
-			    if(keys.key2 & KEY_X)      input.pad[0] |= INPUT_B2;
-			    if(keys.key2 & KEY_O)      input.pad[0] |= INPUT_B1;
-			    //if(keys.key2 & KEY_D)      input.pad[0] |= INPUT_SELECT;
-			    if(keys.key2 & KEY_START)      input.pad[0] |= INPUT_RUN;
-				
-			//bitmap.data = (uint8 *)getLCDShadowBuffer();
-			//uint16_t *fb = getLCDShadowBuffer();
-                        for (i = 0; i < FRAMESKIP; i++) {
-        			system_frame(1);
-        			update_sound(i);
-                        }
+
+                input.pad[0] = 0;
+                    if(keys.key2 & KEY_UP)     input.pad[0] |= INPUT_UP;
+                    if(keys.key2 & KEY_DOWN)   input.pad[0] |= INPUT_DOWN;
+                    if(keys.key2 & KEY_LEFT)   input.pad[0] |= INPUT_LEFT;
+                    if(keys.key2 & KEY_RIGHT)  input.pad[0] |= INPUT_RIGHT;
+                    if(keys.key2 & KEY_X)      input.pad[0] |= INPUT_B2;
+                    if(keys.key2 & KEY_O)      input.pad[0] |= INPUT_B1;
+                    //if(keys.key2 & KEY_D)      input.pad[0] |= INPUT_SELECT;
+                    if(keys.key2 & KEY_START)      input.pad[0] |= INPUT_RUN;
+                        
+                //bitmap.data = (uint8 *)getLCDShadowBuffer();
+                //uint16_t *fb = getLCDShadowBuffer();
+                for (i = 0; i < FRAMESKIP; i++) {
+                        system_frame(1);
+                        update_sound(i);
+                }
 #ifndef RENDER_8BPP
                 bitmap.data = (uint8 *)gp.pixels;
 #endif
-			system_frame(0);
-			update_sound(i);
+                system_frame(0);
+                update_sound(i);
 #ifdef RENDER_8BPP
-			uint8_t *o = bitmap.data;
-			for (i = 0; i < bitmap.height; i++) {
-				int j;
-				for (j = 0; j < bitmap.width; j++) {
-					fb[j] = palette[o[j]];
-				}
-				fb += bitmap.width;
-				o += bitmap.width;
-			}
+                uint8_t *o = bitmap.data;
+                for (i = 0; i < bitmap.height; i++) {
+                        int j;
+                        for (j = 0; j < bitmap.width; j++) {
+                                fb[j] = palette[o[j]];
+                        }
+                        fb += bitmap.width;
+                        o += bitmap.width;
+                }
 #endif
-			uint16_t *fb = getLCDShadowBuffer();
-			key_data_t nkeys;
-			NativeGE_getKeyInput(&nkeys);
-			for (i = 0; i < 32; i++) {
-				memset(fb + bitmap.width * 260 + i * 10, (keys.key2 & (1 << i)) ? 0xff : 0, 20);
-				memset(fb + bitmap.width * 265 + i * 10, (keys.key1 & (1 << i)) ? 0xf0 : 0, 20);
-				memset(fb + bitmap.width * 270 + i * 10, (nkeys.key2 & (1 << i)) ? 0x0f : 0, 20);
-			}
-			
 #if 0
-		}
+                uint16_t *fb = getLCDShadowBuffer();
+                key_data_t nkeys;
+                NativeGE_getKeyInput(&nkeys);
+                for (i = 0; i < 32; i++) {
+                        memset(fb + bitmap.width * 260 + i * 10, (keys.key2 & (1 << i)) ? 0xff : 0, 20);
+                        memset(fb + bitmap.width * 265 + i * 10, (keys.key1 & (1 << i)) ? 0xf0 : 0, 20);
+                        memset(fb + bitmap.width * 270 + i * 10, (nkeys.key2 & (1 << i)) ? 0x0f : 0, 20);
+                }
 #endif
+
                 if (emuIfGraphShow() < 0)
                         return 0;
                 emuIfSoundPlay(&sp);
