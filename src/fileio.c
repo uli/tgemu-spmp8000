@@ -156,12 +156,6 @@ int load_rom(char *filename, int split, int flip)
     if (!found)
         return 23;
 #endif
-#if 0
-    int fd, res;
-    fs_open("wback.bin", FS_O_CREAT|FS_O_WRONLY|FS_O_TRUNC, &fd);
-    fs_write(fd, buf, size, &res);
-    fs_close(fd);
-#endif
 
     /* Bit-flip image */
     if(flip)
