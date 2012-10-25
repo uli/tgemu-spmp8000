@@ -19,8 +19,6 @@ void draw_string_centered(uint8_t font_id, uint16_t y, char *str);
 extern void **ftab;
 uint16_t *(*int_get_framebuffer)(void);
 uint16_t *(*int_get_shadowbuffer)(void);
-void **itab = (void **)0x5a1e48;
-void **gDisplayDev = (void **)0x4de14c;
 void (*set_lcd_fb_format)(int);
 int (*getLCDBuffFormat)(void);
 int (*getLCDWidth)(void);
@@ -64,9 +62,7 @@ int main()
 	// initialize the game api
 	libgame_init();
 	libemu_init();
-	int_get_shadowbuffer = itab[0];
-	int_get_framebuffer = itab[1];
-	
+
 	set_lcd_fb_format = gDisplayDev[0];
 	getLCDBuffFormat = gDisplayDev[1];
 	getLCDWidth = gDisplayDev[2];
@@ -215,7 +211,7 @@ int main()
 		}
 #endif
 		uint16_t *fb;
-		fb = getLCDShadowBuffer(); //int_get_shadowbuffer();
+		fb = getLCDShadowBuffer();
 #if 0
 		for (i = 0; i < getLCDWidth() * getLCDHeight(); i++) {
 			fb[i] = RGB(col % 256, col2 % 256,0); //i;
