@@ -92,7 +92,7 @@ int main()
 	fs_fprintf(fd, "Width %d, Height %d\n", getLCDWidth(), getLCDHeight());
 	fs_fprintf(fd, "LCD format %08x\n", getLCDBuffFormat());
 	uint16_t sound_buf[44100 * 2]; //735 * 2];//367 * 2];
-	sp.buf = sound_buf;
+	sp.buf = (uint8_t *)sound_buf;
 	sp.buf_size = 735 * (FRAMESKIP + 1);// * 2;//367 * 2;
 	sp.rate = 22050;
 	sp.channels = 1; //2;
