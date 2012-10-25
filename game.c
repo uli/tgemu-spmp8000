@@ -221,12 +221,13 @@ int main()
 				memset(fb + bitmap.width * 270 + i * 10, (nkeys.key2 & (1 << i)) ? 0x0f : 0, 20);
 			}
 			
-			emuIfSoundPlay(&sp);
 #if 0
 		}
 #endif
                 if (emuIfGraphShow() < 0)
                         return 0;
+                emuIfSoundPlay(&sp);
+
 		okeys = keys;
 	}
 
