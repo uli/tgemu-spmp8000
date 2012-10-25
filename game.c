@@ -34,7 +34,7 @@ int (*NativeGE_getKeyInput)(key_data_t *) = (void *)0x326cf4;
   fs_write(fd, buf, strlen(buf), &_res); \
 }
 
-#define FRAMESKIP 2
+#define FRAMESKIP 3
 
 sound_params_t sp;
 void update_sound(int off)
