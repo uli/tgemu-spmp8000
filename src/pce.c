@@ -29,7 +29,7 @@ int pce_init(void)
 #ifdef FAST_MEM
     bank_reset();
 #endif
-    h6280_reset(0);
+    h6280_reset();
     h6280_set_irq_callback(&pce_irq_callback);
     return (1);
 }
@@ -44,7 +44,7 @@ void pce_reset(void)
     bank_reset();
 #endif
     //load_file("pce.brm", bram, 0x2000);
-    h6280_reset(0);
+    h6280_reset();
     h6280_set_irq_callback(&pce_irq_callback);
 }
 
@@ -133,6 +133,7 @@ int cpu_readmem21(int address)
 
 int pce_irq_callback(int irqline)
 {
+    (void)irqline;
     return (0);
 }
 

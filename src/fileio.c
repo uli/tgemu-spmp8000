@@ -13,8 +13,7 @@ int load_rom(char *filename, int split, int flip)
     #include "bitflip.h"
     uint8 header[0x200];
     uint8 *ptr = NULL, *buf = NULL;
-    uint32 crc;
-    int size, n;
+    int size;
 
     /* Default */
     strcpy(game_name, filename);
@@ -138,11 +137,12 @@ int load_rom(char *filename, int split, int flip)
 
 #if 0
     /* Generate CRC and print information */
-    crc = crc32(0, buf, size);
+    uint32 crc = crc32(0, buf, size);
 
     /* Look up game CRC in the CRC database, and set up flip and
        split options accordingly */
     int found = 0;
+    int n;
     for(n = 0; n < (sizeof(pcecrc_list) / sizeof(t_pcecrc)); n += 1)
     {
         if(crc == pcecrc_list[n].crc)
@@ -217,7 +217,7 @@ int load_file(char *filename, char *buf, int size)
 }
 
 
-int save_file(char *filename, char *buf, int size)
+int save_file(char *filename, uint8 *buf, int size)
 {
     int fd = 0;
     fs_open(filename, FS_O_WRONLY, &fd);

@@ -39,7 +39,7 @@ extern int h6280_speed;
 
 extern int h6280_ICount;				/* cycle count */
 
-extern void h6280_reset(void *param);			/* Reset registers to the initial values */
+extern void h6280_reset(void);			/* Reset registers to the initial values */
 extern void h6280_exit(void);					/* Shut down CPU */
 extern int h6280_execute(int cycles);			/* Execute cycles - returns number of cycles actually run */
 extern unsigned h6280_get_context(void *dst);	/* Get registers, return context size */
