@@ -23,7 +23,7 @@ OBJS	= $(RESOBJS) game.o \
   src/vdc.o \
   src/cpu/h6280.o \
 
-LIBS	= -lgame -lemu -lc -lgcc -Lzlib-1.2.7 -lz
+LIBS	= -lgame -lemu -lfreetype -lc -lgcc -Lzlib-1.2.7 -lz -Lfreetype-flat
 
 include ../libgame/libgame.mk
-CFLAGS += -Isrc -Isrc/cpu -Izlib-1.2.7 -Isrc/spmp -fno-strict-aliasing -DLSB_FIRST -DFAST_MEM -O3 -funroll-loops
+CFLAGS += -Isrc -Isrc/cpu -Izlib-1.2.7 -Ifreetype-flat/include -Isrc/spmp -fno-strict-aliasing -DLSB_FIRST -DFAST_MEM -O3 -funroll-loops
