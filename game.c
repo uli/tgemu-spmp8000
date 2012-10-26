@@ -15,18 +15,9 @@ extern int sprintf(char *__s, const char *format, ...);
 #endif
 
 extern void **ftab;
-uint16_t *(*int_get_framebuffer)(void);
-uint16_t *(*int_get_shadowbuffer)(void);
-void (*set_lcd_fb_format)(int);
-int (*getLCDBuffFormat)(void);
-int (*getLCDWidth)(void);
-int (*getLCDHeight)(void);
-uint16_t *(*getLCDShadowBuffer)(void);
-uint16_t *(*getLCDFrameBuffer)(void);
-void (*setLCDFrameBuffer)(uint16_t *fb); // educated guess
-void (*lcd_flip)(void);
-void (*lcd_clear)(void); // actually returns BitBlt_hw retval, but that is always 0
 int (*NativeGE_getKeyInput)(key_data_t *) = (void *)0x326cf4;
+
+extern display_dev_t *gDisplayDev;
 
 #define fs_fprintf(fd, x...) { \
   char buf[256]; int _res; \
@@ -56,17 +47,6 @@ int main()
 	libgame_init();
 	libemu_init();
 
-	set_lcd_fb_format = gDisplayDev[0];
-	getLCDBuffFormat = gDisplayDev[1];
-	getLCDWidth = gDisplayDev[2];
-	getLCDHeight = gDisplayDev[3];
-	getLCDShadowBuffer = gDisplayDev[4];
-	setLCDFrameBuffer = gDisplayDev[5];
-	lcd_flip = gDisplayDev[6];
-	lcd_clear = gDisplayDev[7];
-	//setLCDShadowBuffer
-	getLCDFrameBuffer = gDisplayDev[9];
-
 	graph_params_t gp;
 	/* XXX: This should be 512, not 400. */
 	gp.pixels = malloc(400 * 256 * 2);
@@ -88,9 +68,11 @@ int main()
 	fs_open("fb.txt", FS_O_CREAT|FS_O_WRONLY|FS_O_TRUNC, &fd);
 	res = emuIfGraphInit(&gp);
 	fs_fprintf(fd, "emuIfGraphInit (%08x) returns %08x\n", (uint32_t)emuIfGraphInit, res);
-	fs_fprintf(fd, "Framebuffer %08x, shadow buffer %08x\n", getLCDFrameBuffer(), getLCDShadowBuffer());
-	fs_fprintf(fd, "Width %d, Height %d\n", getLCDWidth(), getLCDHeight());
-	fs_fprintf(fd, "LCD format %08x\n", getLCDBuffFormat());
+	fs_fprintf(fd, "Framebuffer %08x, shadow buffer %08x\n",
+	               gDisplayDev->getFrameBuffer(),
+	               gDisplayDev->getShadowBuffer());
+	fs_fprintf(fd, "Width %d, Height %d\n", gDisplayDev->getWidth(), gDisplayDev->getHeight());
+	fs_fprintf(fd, "LCD format %08x\n", gDisplayDev->getBuffFormat());
 	uint16_t sound_buf[44100 * 2]; //735 * 2];//367 * 2];
 	sp.buf = (uint8_t *)sound_buf;
 	sp.buf_size = 735 * (FRAMESKIP + 1);// * 2;//367 * 2;
