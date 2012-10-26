@@ -7,6 +7,8 @@
 #include "gfx_types.h"
 #include "font.h"
 #include "shared.h"
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 //#define	NULL	(void*)0
 
@@ -36,11 +38,38 @@ void update_sound(int off)
         }
 }
 
+FT_Library  library;
+FT_Face face;
+
+void render_text(const char *text, int x, int y)
+{
+    FT_GlyphSlot  slot = face->glyph;
+    uint16_t *fb = gDisplayDev->getShadowBuffer();
+    uint32_t disp_width = gDisplayDev->getWidth();
+    
+    for (; *text; text++) {
+        uint16_t *fbpen = fb + (y - slot->bitmap_top) * disp_width + x + slot->bitmap_left;
+        int error = FT_Load_Char( face, *text, FT_LOAD_RENDER );
+        if (error)
+            continue;
+        int w, h;
+        uint8_t *src = slot->bitmap.buffer;
+        for (h = 0; h < slot->bitmap.rows; h++) {
+            for (w = 0; w < slot->bitmap.width; w++) {
+                fbpen[w] = src[w] >> 3;
+            }
+            fbpen += disp_width;
+            src += slot->bitmap.pitch;
+        }
+        x += slot->advance.x >> 6;
+    }
+}
+
 int main()
 {
 	int i;
 	gfx_rect_t rect;
-	int fd;
+	int fd, res;
 	key_data_t keys, okeys;
 
 	// initialize the game api
@@ -63,8 +92,6 @@ int main()
 	rect.width = 480;
 	rect.height = 272;
 
-	int res;
-	
 	fs_open("fb.txt", FS_O_CREAT|FS_O_WRONLY|FS_O_TRUNC, &fd);
 	res = emuIfGraphInit(&gp);
 	fs_fprintf(fd, "emuIfGraphInit (%08x) returns %08x\n", (uint32_t)emuIfGraphInit, res);
@@ -73,6 +100,7 @@ int main()
 	               gDisplayDev->getShadowBuffer());
 	fs_fprintf(fd, "Width %d, Height %d\n", gDisplayDev->getWidth(), gDisplayDev->getHeight());
 	fs_fprintf(fd, "LCD format %08x\n", gDisplayDev->getBuffFormat());
+
 	uint16_t sound_buf[44100 * 2]; //735 * 2];//367 * 2];
 	sp.buf = (uint8_t *)sound_buf;
 	sp.buf_size = 735 * (FRAMESKIP + 1);// * 2;//367 * 2;
@@ -86,6 +114,31 @@ int main()
 	okeys.key2 = 1;
 	i=0;
 	
+	res = FT_Init_FreeType( &library );
+	if (res) {
+	    fs_fprintf(fd, "FT_Init_FreeType failed (%d)\n", res);
+	    fs_close(fd);
+	    return 0;
+        }
+        res = FT_New_Face(library, "/Rom/mw/fonts/truetype/ARIALUNI.TTF", 0, &face);
+        if (res) {
+            fs_fprintf(fd, "FT_New_Face failed (%d)\n", res);
+            fs_close(fd);
+            return 0;
+        }
+        else {
+            fs_fprintf(fd, "%d glyphs found\n", face->num_glyphs);
+        }
+        res = FT_Set_Pixel_Sizes(face, 0, 16);
+        if (res) {
+            fs_fprintf(fd, "FT_Set_Pixel_Sizes failed (%d)\n", res);
+            fs_close(fd);
+            return 0;
+        }
+        memset(gDisplayDev->getShadowBuffer(), 0, gDisplayDev->getWidth() * gDisplayDev->getHeight() * 2);
+        render_text("Hello, Freetype!", 10, 10);
+        gDisplayDev->lcdFlip();
+        
 	fs_fprintf(fd, "loading ROM\n");
 	res = load_rom("pce.pce", 0, 0);
 	if (res != 1) {
