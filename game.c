@@ -29,6 +29,35 @@ void update_sound(int off)
         }
 }
 
+key_data_t wait_for_key(void)
+{
+        static int auto_repeat = 0;
+        static key_data_t okeys;
+	key_data_t keys;
+        get_keys(&keys);
+        uint32_t last_press_tick = get_time();
+        while (auto_repeat && keys.key2 == okeys.key2 && get_time() < last_press_tick + 100) {
+            get_keys(&keys);
+        }
+        if (auto_repeat && keys.key2 == okeys.key2)
+            return keys;
+        auto_repeat = 0;
+        last_press_tick = get_time();
+        while (keys.key2 && keys.key2 == okeys.key2) {
+            get_keys(&keys);
+            if (get_time() > last_press_tick + 500) {
+                auto_repeat = 1;
+                okeys = keys;
+                return keys;
+            }
+        }
+        okeys = keys;
+        while (okeys.key2 == keys.key2) {
+            get_keys(&keys);
+        }
+        okeys = keys;
+        return keys;
+}
 
 int main()
 {
