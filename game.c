@@ -188,9 +188,12 @@ int main()
 	uint32_t last_frame = get_time();
 	int last_spf = 16;
 	char fps[16] = "";
+	int show_timing = 0;
 
 	while (1) {
 		get_keys(&keys);
+                key_data_t nkeys;
+                NativeGE_getKeyInput(&nkeys);
 
 #if 0
 		if ((keys.key2 & KEY_DOWN) && !(okeys.key2 & KEY_DOWN)) {
@@ -215,14 +218,28 @@ int main()
 #endif
 
                 input.pad[0] = 0;
-                    if(keys.key2 & KEY_UP)     input.pad[0] |= INPUT_UP;
-                    if(keys.key2 & KEY_DOWN)   input.pad[0] |= INPUT_DOWN;
-                    if(keys.key2 & KEY_LEFT)   input.pad[0] |= INPUT_LEFT;
-                    if(keys.key2 & KEY_RIGHT)  input.pad[0] |= INPUT_RIGHT;
-                    if(keys.key2 & KEY_X)      input.pad[0] |= INPUT_B2;
-                    if(keys.key2 & KEY_O)      input.pad[0] |= INPUT_B1;
-                    //if(keys.key2 & KEY_D)      input.pad[0] |= INPUT_SELECT;
-                    if(keys.key2 & KEY_START)      input.pad[0] |= INPUT_RUN;
+#ifndef NATIVE_KEYS
+            if(keys.key2 & KEY_UP)     input.pad[0] |= INPUT_UP;
+            if(keys.key2 & KEY_DOWN)   input.pad[0] |= INPUT_DOWN;
+            if(keys.key2 & KEY_LEFT)   input.pad[0] |= INPUT_LEFT;
+            if(keys.key2 & KEY_RIGHT)  input.pad[0] |= INPUT_RIGHT;
+            if(keys.key2 & KEY_X)      input.pad[0] |= INPUT_B2;
+            if(keys.key2 & KEY_O)      input.pad[0] |= INPUT_B1;
+            //if(keys.key2 & KEY_D)      input.pad[0] |= INPUT_SELECT;
+            if(keys.key2 & KEY_START)      input.pad[0] |= INPUT_RUN;
+#else
+            if (nkeys.key2 & (1 << 0))	input.pad[0] |= INPUT_UP;
+            if (nkeys.key2 & (1 << 1))	input.pad[0] |= INPUT_DOWN;
+            if (nkeys.key2 & (1 << 2))	input.pad[0] |= INPUT_LEFT;
+            if (nkeys.key2 & (1 << 3))	input.pad[0] |= INPUT_RIGHT;
+            if (nkeys.key2 & (1 << 4))	input.pad[0] |= INPUT_B1;
+            if (nkeys.key2 & (1 << 5))	input.pad[0] |= INPUT_B2;
+            //if (nkeys.key2 & (1 << 7))	input.pad[0] |= INPUT_UP;
+            if (nkeys.key2 & (1 << 8))	show_timing = !show_timing;
+            //if (nkeys.key2 & (1 << 9))	input.pad[0] |= INPUT_UP;
+            if (nkeys.key2 & (1 << 10))	input.pad[0] |= INPUT_SELECT;
+            if (nkeys.key2 & (1 << 11))	input.pad[0] |= INPUT_RUN;
+#endif
                         
                 //bitmap.data = (uint8 *)getLCDShadowBuffer();
                 //uint16_t *fb = getLCDShadowBuffer();
@@ -258,23 +275,22 @@ int main()
                 }
 #endif
 #if 0
-                uint16_t *fb = getLCDShadowBuffer();
-                key_data_t nkeys;
-                NativeGE_getKeyInput(&nkeys);
+                uint16_t *fb = gp.pixels + bitmap.viewport.x + bitmap.viewport.y * BMWIDTH;
                 for (i = 0; i < 32; i++) {
-                        memset(fb + bitmap.width * 260 + i * 10, (keys.key2 & (1 << i)) ? 0xff : 0, 20);
-                        memset(fb + bitmap.width * 265 + i * 10, (keys.key1 & (1 << i)) ? 0xf0 : 0, 20);
-                        memset(fb + bitmap.width * 270 + i * 10, (nkeys.key2 & (1 << i)) ? 0x0f : 0, 20);
+                        memset(fb + bitmap.width * 24 + i * 6, (keys.key2 & (1 << i)) ? 0xff : 0, 12);
+                        memset(fb + bitmap.width * 25 + i * 6, (nkeys.key2 & (1 << i)) ? 0x0f : 0, 12);
                 }
 #endif
 
-                render_text_ex(gp.pixels, BMWIDTH, fps, bitmap.viewport.x, bitmap.viewport.y);
+                if (show_timing)
+                    render_text_ex(gp.pixels, BMWIDTH, fps, bitmap.viewport.x, bitmap.viewport.y);
                 if (emuIfGraphShow() < 0)
                         return 0;
 
                 uint32_t now = get_time();
                 int spf = (now - last_frame) / (frameskip + 1);
-                sprintf(fps, "%d FS %d", spf, frameskip);
+                if (show_timing)
+                    sprintf(fps, "%d FS %d", spf, frameskip);
                 if ((spf + last_spf) / 2 <= 15 && frameskip > 0) {
                     frameskip--;
                     last_spf = 16;
