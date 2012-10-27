@@ -12,7 +12,6 @@
 #include "file.h"
 
 extern void **ftab;
-int (*NativeGE_getKeyInput)(key_data_t *) = (void *)0x326cf4;
 
 extern display_dev_t *gDisplayDev;
 
