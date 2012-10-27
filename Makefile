@@ -12,7 +12,7 @@ include ../libgame/libgame.cfg
 # resources
 RESOBJS	= font.o
 
-OBJS	= $(RESOBJS) game.o text.o \
+OBJS	= $(RESOBJS) game.o text.o file.o \
   src/fileio.o \
   src/pce.o \
   src/psg.o \
