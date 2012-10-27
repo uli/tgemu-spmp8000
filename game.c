@@ -65,7 +65,6 @@ key_data_t wait_for_key(void)
 int main()
 {
 	int i;
-	gfx_rect_t rect;
 	int fd, res;
 	key_data_t keys;
 
@@ -84,11 +83,6 @@ int main()
 	gp.src_clip_y = 0;
 	gp.src_clip_w = 256;
 	gp.src_clip_h = 240;
-
-	rect.x = 0;
-	rect.y = 0;
-	rect.width = 480;
-	rect.height = 272;
 
 	fs_open("fb.txt", FS_O_CREAT|FS_O_WRONLY|FS_O_TRUNC, &fd);
 	res = emuIfGraphInit(&gp);
