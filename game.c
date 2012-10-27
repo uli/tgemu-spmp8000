@@ -5,14 +5,7 @@
 #include "libgame.h"
 #include <libemu.h>
 #include "gfx_types.h"
-#include "font.h"
 #include "shared.h"
-
-//#define	NULL	(void*)0
-
-#ifndef HAVE_NEWLIB
-extern int sprintf(char *__s, const char *format, ...);
-#endif
 
 extern void **ftab;
 int (*NativeGE_getKeyInput)(key_data_t *) = (void *)0x326cf4;
@@ -42,7 +35,7 @@ int main()
 	int i;
 	gfx_rect_t rect;
 	int fd, res;
-	key_data_t keys, okeys;
+	key_data_t keys;
 
 	// initialize the game api
 	libgame_init();
@@ -82,8 +75,6 @@ int main()
 	sp.callback = 0;
 	fs_fprintf(fd, "emuIfSoundInit returns %d, sp.rate %d\n", emuIfSoundInit(&sp), sp.rate);
 	
-	okeys.key1 = 0;
-	okeys.key2 = 1;
 	i=0;
 	
 	fs_fprintf(fd, "loading ROM\n");
@@ -210,7 +201,6 @@ int main()
                         return 0;
                 emuIfSoundPlay(&sp);
 
-		okeys = keys;
 	}
 
 	return 0;
