@@ -275,12 +275,14 @@ int main()
                 uint32_t now = get_time();
                 int spf = (now - last_frame) / (frameskip + 1);
                 sprintf(fps, "%d FS %d", spf, frameskip);
-                if ((spf + last_spf) / 2 <= 15 && frameskip > 0)
+                if ((spf + last_spf) / 2 <= 15 && frameskip > 0) {
                     frameskip--;
-                if ((spf + last_spf) / 2 >= 17 && frameskip < MAX_FRAMESKIP)
+                    last_spf = 16;
+                }
+                else if ((spf + last_spf) / 2 >= 17 && frameskip < MAX_FRAMESKIP) {
                     frameskip++;
-                last_spf = spf;
-
+                    last_spf = spf;
+                }
 
                 emuIfSoundPlay(&sp);
                 last_frame = get_time();
