@@ -385,9 +385,11 @@ void render_bg_16(int line)
         src = &bg_pattern_cache[(name << 6) + (v_line << 3)];
 
         /* Draw column */
+        uint16 *dc3 = &dst[column << 3];
         for(x = 0; x < 8; x += 1)
         {
-            dst[(column << 3) | (x)] = pixel[0][(src[x] | palette)];
+            *dc3 = pixel[0][(*src | palette)];
+            dc3++; src++;
         }
     }
 }
