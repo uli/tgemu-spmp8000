@@ -186,17 +186,10 @@ int main()
 		}
 #endif
 
-                input.pad[0] = 0;
-#ifndef NATIVE_KEYS
-            if(keys.key2 & KEY_UP)     input.pad[0] |= INPUT_UP;
-            if(keys.key2 & KEY_DOWN)   input.pad[0] |= INPUT_DOWN;
-            if(keys.key2 & KEY_LEFT)   input.pad[0] |= INPUT_LEFT;
-            if(keys.key2 & KEY_RIGHT)  input.pad[0] |= INPUT_RIGHT;
-            if(keys.key2 & KEY_X)      input.pad[0] |= INPUT_B2;
-            if(keys.key2 & KEY_O)      input.pad[0] |= INPUT_B1;
-            //if(keys.key2 & KEY_D)      input.pad[0] |= INPUT_SELECT;
-            if(keys.key2 & KEY_START)      input.pad[0] |= INPUT_RUN;
-#else
+        input.pad[0] = 0;
+        if (NativeGE_getKeyInput) {
+            key_data_t nkeys;
+            NativeGE_getKeyInput(&nkeys);
             if (nkeys.key2 & (1 << 0))	input.pad[0] |= INPUT_UP;
             if (nkeys.key2 & (1 << 1))	input.pad[0] |= INPUT_DOWN;
             if (nkeys.key2 & (1 << 2))	input.pad[0] |= INPUT_LEFT;
@@ -208,8 +201,18 @@ int main()
             //if (nkeys.key2 & (1 << 9))	input.pad[0] |= INPUT_UP;
             if (nkeys.key2 & (1 << 10))	input.pad[0] |= INPUT_SELECT;
             if (nkeys.key2 & (1 << 11))	input.pad[0] |= INPUT_RUN;
-#endif
-                        
+        }
+        else {
+	    get_keys(&keys);
+            if(keys.key2 & KEY_UP)     input.pad[0] |= INPUT_UP;
+            if(keys.key2 & KEY_DOWN)   input.pad[0] |= INPUT_DOWN;
+            if(keys.key2 & KEY_LEFT)   input.pad[0] |= INPUT_LEFT;
+            if(keys.key2 & KEY_RIGHT)  input.pad[0] |= INPUT_RIGHT;
+            if(keys.key2 & KEY_X)      input.pad[0] |= INPUT_B2;
+            if(keys.key2 & KEY_O)      input.pad[0] |= INPUT_B1;
+            //if(keys.key2 & KEY_D)      input.pad[0] |= INPUT_SELECT;
+            if(keys.key2 & KEY_START)      input.pad[0] |= INPUT_RUN;
+        }
                 //bitmap.data = (uint8 *)getLCDShadowBuffer();
                 //uint16_t *fb = getLCDShadowBuffer();
                 for (i = 0; i < frameskip; i++) {
