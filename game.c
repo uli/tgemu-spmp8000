@@ -145,25 +145,21 @@ int main()
     bitmap.viewport.y = 0x00;
     bitmap.viewport.changed = 0;
 	
-	fs_fprintf(fd, "system_init\n");
-	system_init(44100);
-	fs_fprintf(fd, "system_reset\n");
-	system_reset();
-	fs_fprintf(fd, "snd.enabled %d, buffer size %d\n", snd.enabled, snd.buffer_size);
-	fs_close(fd);
-	//return 0;
-	
-	int frameskip = MAX_FRAMESKIP;
-	uint32_t last_frame = get_time();
-	int last_spf = 16;
-	char fps[16] = "";
-	int show_timing = 0;
+    fs_fprintf(fd, "system_init\n");
+    system_init(44100);
+    fs_fprintf(fd, "system_reset\n");
+    system_reset();
+    fs_fprintf(fd, "snd.enabled %d, buffer size %d\n", snd.enabled, snd.buffer_size);
+    fs_close(fd);
+    //return 0;
+    
+    int frameskip = MAX_FRAMESKIP;
+    uint32_t last_frame = get_time();
+    int last_spf = 16;
+    char fps[16] = "";
+    int show_timing = 0;
 
-	while (1) {
-		get_keys(&keys);
-                key_data_t nkeys;
-                NativeGE_getKeyInput(&nkeys);
-
+    while (1) {
 
         input.pad[0] = 0;
         if (NativeGE_getKeyInput) {
@@ -241,8 +237,8 @@ int main()
                 emuIfSoundPlay(&sp);
                 last_frame = get_time();
 
-	}
+    }
 
-	free_fonts();
-	return 0;
+    free_fonts();
+    return 0;
 }
