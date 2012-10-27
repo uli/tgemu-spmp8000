@@ -22,7 +22,7 @@ extern display_dev_t *gDisplayDev;
   fs_write(fd, buf, strlen(buf), &_res); \
 }
 
-#define FRAMESKIP 3
+#define MAX_FRAMESKIP 6
 
 sound_params_t sp;
 void update_sound(int off)
@@ -102,7 +102,7 @@ int main()
 
 	uint16_t sound_buf[44100 * 2]; //735 * 2];//367 * 2];
 	sp.buf = (uint8_t *)sound_buf;
-	sp.buf_size = 735 * (FRAMESKIP + 1);// * 2;//367 * 2;
+	sp.buf_size = 735 * (MAX_FRAMESKIP + 1);// * 2;//367 * 2;
 	sp.rate = 22050;
 	sp.channels = 1; //2;
 	sp.depth = 0;
@@ -184,6 +184,11 @@ int main()
 	fs_close(fd);
 	//return 0;
 	
+	int frameskip = MAX_FRAMESKIP;
+	uint32_t last_frame = get_time();
+	int last_spf = 16;
+	char fps[16] = "";
+
 	while (1) {
 		get_keys(&keys);
 
@@ -221,7 +226,7 @@ int main()
                         
                 //bitmap.data = (uint8 *)getLCDShadowBuffer();
                 //uint16_t *fb = getLCDShadowBuffer();
-                for (i = 0; i < FRAMESKIP; i++) {
+                for (i = 0; i < frameskip; i++) {
                         system_frame(1);
                         update_sound(i);
                 }
@@ -230,6 +235,7 @@ int main()
 #endif
                 system_frame(0);
                 update_sound(i);
+                sp.buf_size = 735 * (frameskip + 1);
 
                 if (bitmap.viewport.changed) {
                     gp.src_clip_x = bitmap.viewport.x;
@@ -262,9 +268,22 @@ int main()
                 }
 #endif
 
+                render_text_ex(gp.pixels, BMWIDTH, fps, bitmap.viewport.x, bitmap.viewport.y);
                 if (emuIfGraphShow() < 0)
                         return 0;
+
+                uint32_t now = get_time();
+                int spf = (now - last_frame) / (frameskip + 1);
+                sprintf(fps, "%d FS %d", spf, frameskip);
+                if ((spf + last_spf) / 2 <= 15 && frameskip > 0)
+                    frameskip--;
+                if ((spf + last_spf) / 2 >= 17 && frameskip < MAX_FRAMESKIP)
+                    frameskip++;
+                last_spf = spf;
+
+
                 emuIfSoundPlay(&sp);
+                last_frame = get_time();
 
 	}
 
