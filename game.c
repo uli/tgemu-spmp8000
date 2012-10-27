@@ -139,35 +139,11 @@ int main()
 	}
         free(romname);
 
-#ifdef RENDER_8BPP
-#define RGB(r, g, b) ( (((r) >> 3) << 11) | (((g) >> 2) << 5) | ((b) >> 3) )
-#define RGBR(r, g, b) ( (((r)) << 11) | (((g)) << 5) | ((b)) )
-	uint16_t palette[256];
-	for (i = 0; i < 256; i++) {
-		int r = ((i >> 2) & 7);
-		r = ((r << 3) | r);
-		int g = ((i >> 5) & 7);
-		g = (g << 3) | g;
-		int b = ((i >> 0) & 3);
-		b = (b << 4) | b;
-		palette[i] = RGBR(r >> 1, g, b >> 1);
-		fs_fprintf(fd, "palette raw %02x r %d g %d b %d rgb %04x\n", i, r, g, b, palette[i]);
-	}
-#endif
-
     bitmap.width = BMWIDTH;
     bitmap.height = 256;
-#ifdef RENDER_8BPP
-    bitmap.depth = 8;
-    bitmap.granularity = (bitmap.depth >> 3);
-    uint8_t bitmap_buf[bitmap.width * bitmap.height * bitmap.granularity];
-    memset(bitmap_buf, 0, bitmap.width * bitmap.height * bitmap.granularity);
-    bitmap.data = bitmap_buf; //getLCDShadowBuffer(); //bitmap_buf;
-#else
     bitmap.depth = 16;
     bitmap.granularity = (bitmap.depth >> 3);
     bitmap.data = (uint8 *)gp.pixels;
-#endif
     
     bitmap.pitch = (bitmap.width * bitmap.granularity);
     bitmap.viewport.w = 256;
@@ -247,9 +223,7 @@ int main()
                         system_frame(1);
                         update_sound(i);
                 }
-#ifndef RENDER_8BPP
                 bitmap.data = (uint8 *)gp.pixels;
-#endif
                 system_frame(0);
                 update_sound(i);
                 sp.buf_size = 735 * (frameskip + 1);
@@ -263,17 +237,6 @@ int main()
                     bitmap.viewport.changed = 0;
                 }
 
-#ifdef RENDER_8BPP
-                uint8_t *o = bitmap.data;
-                for (i = 0; i < bitmap.height; i++) {
-                        int j;
-                        for (j = 0; j < bitmap.width; j++) {
-                                fb[j] = palette[o[j]];
-                        }
-                        fb += bitmap.width;
-                        o += bitmap.width;
-                }
-#endif
 #if 0
                 uint16_t *fb = gp.pixels + bitmap.viewport.x + bitmap.viewport.y * BMWIDTH;
                 for (i = 0; i < 32; i++) {
