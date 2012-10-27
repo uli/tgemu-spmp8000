@@ -76,8 +76,9 @@ int main()
 
 	graph_params_t gp;
 	/* XXX: This should be 512, not 400. */
-	gp.pixels = malloc(400 * 256 * 2);
-	gp.width = 400;
+#define BMWIDTH (32 + 512 + 32)
+	gp.pixels = malloc(BMWIDTH * 256 * 2);
+	gp.width = BMWIDTH;
 	gp.height = 256;
 	gp.unknown_flag = 0;
 	gp.src_clip_x = 0x20;
@@ -154,7 +155,7 @@ int main()
 	}
 #endif
 
-    bitmap.width = 400;
+    bitmap.width = BMWIDTH;
     bitmap.height = 256;
 #ifdef RENDER_8BPP
     bitmap.depth = 8;
@@ -173,6 +174,7 @@ int main()
     bitmap.viewport.h = 240;
     bitmap.viewport.x = 0x20;
     bitmap.viewport.y = 0x00;
+    bitmap.viewport.changed = 0;
 	
 	fs_fprintf(fd, "system_init\n");
 	system_init(44100);
@@ -228,6 +230,16 @@ int main()
 #endif
                 system_frame(0);
                 update_sound(i);
+
+                if (bitmap.viewport.changed) {
+                    gp.src_clip_x = bitmap.viewport.x;
+                    gp.src_clip_y = bitmap.viewport.y;
+                    gp.src_clip_w = bitmap.viewport.w;
+                    gp.src_clip_h = bitmap.viewport.h;
+                    emuIfGraphChgView(&gp);
+                    bitmap.viewport.changed = 0;
+                }
+
 #ifdef RENDER_8BPP
                 uint8_t *o = bitmap.data;
                 for (i = 0; i < bitmap.height; i++) {
