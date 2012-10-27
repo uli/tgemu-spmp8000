@@ -93,7 +93,9 @@ int load_rom(char *filename, int split, int flip)
           return (2);
 
         /* Get file size */
-        size = 262144; //gzsize(gd);
+        struct _ecos_stat st;
+        _ecos_fstat(gd, &st);
+        size = st.st_size;
 
         /* Allocate file data buffer */
         buf = malloc(size);
@@ -135,27 +137,20 @@ int load_rom(char *filename, int split, int flip)
         buf += 0x200;
     }
 
-#if 0
     /* Generate CRC and print information */
     uint32 crc = crc32(0, buf, size);
 
     /* Look up game CRC in the CRC database, and set up flip and
        split options accordingly */
-    int found = 0;
-    int n;
+    unsigned int n;
     for(n = 0; n < (sizeof(pcecrc_list) / sizeof(t_pcecrc)); n += 1)
     {
         if(crc == pcecrc_list[n].crc)
         {
-            found = 1;
-            return (int)crc;
             if(pcecrc_list[n].flag & FLAG_BITFLIP) flip = 1;
             if(pcecrc_list[n].flag & FLAG_SPLIT) split = 1;
         }
     }
-    if (!found)
-        return 23;
-#endif
 
     /* Bit-flip image */
     if(flip)
