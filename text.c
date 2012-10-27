@@ -89,8 +89,9 @@ render_asc:
     }
 }
 
-void render_text(const char *t, int x, int y)
+int render_text(const char *t, int x, int y)
 {
+    int old_x = x;
     const uint8_t *text = (uint8_t *)t;
     while (*text) {
         uint32_t codepoint;
@@ -125,4 +126,5 @@ void render_text(const char *t, int x, int y)
         }
         x += draw_character(codepoint, x, y);
     }
+    return x - old_x;
 }
