@@ -6,6 +6,10 @@
 #include <libemu.h>
 #include "gfx_types.h"
 #include "shared.h"
+#include <sys/stat.h>
+#include <fcntl.h>
+#include "text.h"
+#include "file.h"
 
 extern void **ftab;
 int (*NativeGE_getKeyInput)(key_data_t *) = (void *)0x326cf4;
@@ -106,13 +110,33 @@ int main()
 	
 	i=0;
 	
+	res = load_fonts();
+	if (res < 0) {
+	    fs_fprintf(fd, "load_fonts failed (%d)\n", res);
+        }
+        //memset(gDisplayDev->getShadowBuffer(), 0, gDisplayDev->getWidth() * gDisplayDev->getHeight() * 2);
+        gDisplayDev->lcdClear();
+        render_text("TGEmu SPMP", (gDisplayDev->getWidth() - 10 * 8) / 2, 32);
+        render_text("Press any key", (gDisplayDev->getWidth() - 13 * 8) / 2, 200);
+        cache_sync();
+        gDisplayDev->lcdFlip();
+        wait_for_key();
+
+        char *romname = 0;
+        if ((res = select_file(NULL, "pce", &romname)) < 0) {
+            fs_fprintf(fd, "select_file() %d\n", res);
+            fs_close(fd);
+            return 0;
+        }
+
 	fs_fprintf(fd, "loading ROM\n");
-	res = load_rom("pce.pce", 0, 0);
+	res = load_rom(romname, 0, 0);
 	if (res != 1) {
 		fs_fprintf(fd, "failed to load ROM: %d\n", res);
 		fs_close(fd);
 		return 0;
 	}
+        free(romname);
 
 #ifdef RENDER_8BPP
 #define RGB(r, g, b) ( (((r) >> 3) << 11) | (((g) >> 2) << 5) | ((b) >> 3) )
@@ -232,5 +256,6 @@ int main()
 
 	}
 
+	free_fonts();
 	return 0;
 }
