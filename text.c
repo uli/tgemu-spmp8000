@@ -52,8 +52,14 @@ void free_fonts(void)
 
 int draw_character(uint32_t codepoint, int x, int y)
 {
-    int width = gDisplayDev->getWidth();
-    uint16_t *fb = gDisplayDev->getShadowBuffer() + width * y + x;
+    return draw_character_ex(gDisplayDev->getShadowBuffer(),
+                      gDisplayDev->getWidth(),
+                      codepoint, x, y);
+}
+
+int draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, int y)
+{
+    uint16_t *fb = buf + width * y + x;
     int i, j;
     if (codepoint < 256) {
 render_asc:
@@ -91,6 +97,13 @@ render_asc:
 
 int render_text(const char *t, int x, int y)
 {
+    return render_text_ex(gDisplayDev->getShadowBuffer(),
+                          gDisplayDev->getWidth(),
+                          t, x, y);
+}
+
+int render_text_ex(uint16_t *buf, int width, const char *t, int x, int y)
+{
     int old_x = x;
     const uint8_t *text = (uint8_t *)t;
     while (*text) {
@@ -124,7 +137,7 @@ int render_text(const char *t, int x, int y)
             codepoint = *text;
             text++;
         }
-        x += draw_character(codepoint, x, y);
+        x += draw_character_ex(buf, width, codepoint, x, y);
     }
     return x - old_x;
 }
