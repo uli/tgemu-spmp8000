@@ -162,6 +162,9 @@ int main()
     while (1) {
 
         input.pad[0] = 0;
+        /* Do this even when using native input because it won't
+           be possible to quit otherwise. */
+        get_keys(&keys);
         if (NativeGE_getKeyInput) {
             key_data_t nkeys;
             NativeGE_getKeyInput(&nkeys);
@@ -178,7 +181,6 @@ int main()
             if (nkeys.key2 & (1 << 11))	input.pad[0] |= INPUT_RUN;
         }
         else {
-	    get_keys(&keys);
             if(keys.key2 & KEY_UP)     input.pad[0] |= INPUT_UP;
             if(keys.key2 & KEY_DOWN)   input.pad[0] |= INPUT_DOWN;
             if(keys.key2 & KEY_LEFT)   input.pad[0] |= INPUT_LEFT;
