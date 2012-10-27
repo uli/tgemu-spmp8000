@@ -4,8 +4,12 @@
 #include <unistd.h>
 #include <libgame.h>
 
+//#define CHINESE
+
 static uint8_t *asc12_font = 0;
+#ifdef CHINESE
 static uint16_t *hzx12_font = 0;
+#endif
 
 int load_fonts(void)
 {
@@ -21,6 +25,7 @@ int load_fonts(void)
         }
         close(fd);
 
+#ifdef CHINESE
         fd = open("/Rom/mw/fonts/CHINESE/HZX12", O_RDONLY);
         if (!fd) {
             return -3;
@@ -31,6 +36,7 @@ int load_fonts(void)
             return -4;
         }
         close(fd);
+#endif
         return 0;
 }
 
@@ -38,8 +44,10 @@ void free_fonts(void)
 {
     free(asc12_font);
     asc12_font = 0;
+#ifdef CHINESE
     free(hzx12_font);
     hzx12_font = 0;
+#endif
 }
 
 int draw_character(uint32_t codepoint, int x, int y)
@@ -47,7 +55,8 @@ int draw_character(uint32_t codepoint, int x, int y)
     int width = gDisplayDev->getWidth();
     uint16_t *fb = gDisplayDev->getShadowBuffer() + width * y + x;
     int i, j;
-    if (codepoint < 128) {
+    if (codepoint < 256) {
+render_asc:
         for (i = 0; i < 12; i++) {
             uint8_t line = asc12_font[codepoint * 12 + i];
             for (j = 0; j < 8; j++) {
@@ -58,20 +67,26 @@ int draw_character(uint32_t codepoint, int x, int y)
         }
         return 8;
     }
+#ifdef CHINESE
+    /* XXX: need to convert from Unicode to Big5 first! */
     else if (codepoint >= 0x4e00 && codepoint < 0x10000) {
         codepoint -= 0x4e00;
         for (i = 0; i < 12; i++) {
             uint16_t line = hzx12_font[codepoint * 12 + i];
+            line = (line >> 8) | (line << 8);
             for (j = 0; j < 16; j++) {
-                fb[j] = (line & 0x80) ? 0xffff : 0;
+                fb[j] = (line & 0x8000) ? 0xffff : 0;
                 line <<= 1;
             }
             fb += width;
         }
         return 16;
     }
-    else
-        return 0; /* we don't have that character */
+#endif
+    else {
+        codepoint = 1;
+        goto render_asc;
+    }
 }
 
 void render_text(const char *t, int x, int y)
