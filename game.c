@@ -164,27 +164,6 @@ int main()
                 key_data_t nkeys;
                 NativeGE_getKeyInput(&nkeys);
 
-#if 0
-		if ((keys.key2 & KEY_DOWN) && !(okeys.key2 & KEY_DOWN)) {
-			format++;
-			set_lcd_fb_format(format % 9);
-		}
-#endif
-#if 0
-		if ((keys.key2 & KEY_UP) && !(okeys.key2 & KEY_UP)) {
-		        sp.buf_size = 44100 * 2;
-			for (i = 0; i < sp.buf_size; i++) {
-				if (i % 256 < 128) {
-					sp.buf[i] = 0;
-				}
-				else {
-					sp.buf[i] = 77;
-				}
-			}
-			emuIfSoundPlay(&sp);
-			//emuIfSoundPlay(&sp);
-		}
-#endif
 
         input.pad[0] = 0;
         if (NativeGE_getKeyInput) {
