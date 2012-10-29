@@ -89,7 +89,7 @@ int load_rom(char *filename, int split, int flip)
         int gd = 0;
 
         /* Open file */
-        if (fs_open(filename, FS_O_RDONLY, &gd))
+        if (NativeGE_fsOpen(filename, FS_O_RDONLY, &gd))
           return (2);
 
         /* Get file size */
@@ -100,7 +100,7 @@ int load_rom(char *filename, int split, int flip)
         /* Allocate file data buffer */
         buf = malloc(size);
         if(!buf) {
-            fs_close(gd);
+            NativeGE_fsClose(gd);
             return (0);
         }
 
@@ -110,7 +110,7 @@ int load_rom(char *filename, int split, int flip)
 #if 0
         uint8 *bbuf = buf;
         while (size) {
-            if (fs_read(gd, bbuf, 4096, &res)) {
+            if (NativeGE_fsRead(gd, bbuf, 4096, &res)) {
                 return 3;
             }
             if (res != 4096)
@@ -119,13 +119,13 @@ int load_rom(char *filename, int split, int flip)
             bbuf += res;
         }
 #else
-        fs_read(gd, buf, size, &res);
+        NativeGE_fsRead(gd, buf, size, &res);
         if (res != size)
             return 42;
 #endif
 
         /* Close file */
-        fs_close(gd);
+        NativeGE_fsClose(gd);
     }
 
     /* Check for 512-byte header */
@@ -197,11 +197,11 @@ int load_rom(char *filename, int split, int flip)
 int load_file(char *filename, char *buf, int size)
 {
     int fd = 0;
-    fs_open(filename, FS_O_RDONLY, &fd);
+    NativeGE_fsOpen(filename, FS_O_RDONLY, &fd);
     if(!fd) return (0);
     int res;
-    fs_read(fd, buf, size, &res);
-    fs_close(fd);
+    NativeGE_fsRead(fd, buf, size, &res);
+    NativeGE_fsClose(fd);
     return (1);
 }
 
@@ -209,11 +209,11 @@ int load_file(char *filename, char *buf, int size)
 int save_file(char *filename, uint8 *buf, int size)
 {
     int fd = 0;
-    fs_open(filename, FS_O_WRONLY, &fd);
+    NativeGE_fsOpen(filename, FS_O_WRONLY, &fd);
     if(!fd) return (0);
     int res;
-    fs_write(fd, buf, size, &res);
-    fs_close(fd);
+    NativeGE_fsWrite(fd, buf, size, &res);
+    NativeGE_fsClose(fd);
     return (1);
 }
 

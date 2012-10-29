@@ -17,7 +17,7 @@ extern display_dev_t *gDisplayDev;
 #define fs_fprintf(fd, x...) { \
   char buf[256]; int _res; \
   sprintf(buf, x); \
-  fs_write(fd, buf, strlen(buf), &_res); \
+  NativeGE_fsWrite(fd, buf, strlen(buf), &_res); \
 }
 
 #define MAX_FRAMESKIP 6
@@ -36,18 +36,18 @@ key_data_t wait_for_key(void)
         static int auto_repeat = 0;
         static key_data_t okeys;
 	key_data_t keys;
-        get_keys(&keys);
-        uint32_t last_press_tick = get_time();
-        while (auto_repeat && keys.key2 == okeys.key2 && get_time() < last_press_tick + 100) {
-            get_keys(&keys);
+        NativeGE_getKeyInput4Ntv(&keys);
+        uint32_t last_press_tick = NativeGE_getTime();
+        while (auto_repeat && keys.key2 == okeys.key2 && NativeGE_getTime() < last_press_tick + 100) {
+            NativeGE_getKeyInput4Ntv(&keys);
         }
         if (auto_repeat && keys.key2 == okeys.key2)
             return keys;
         auto_repeat = 0;
-        last_press_tick = get_time();
+        last_press_tick = NativeGE_getTime();
         while (keys.key2 && keys.key2 == okeys.key2) {
-            get_keys(&keys);
-            if (get_time() > last_press_tick + 500) {
+            NativeGE_getKeyInput4Ntv(&keys);
+            if (NativeGE_getTime() > last_press_tick + 500) {
                 auto_repeat = 1;
                 okeys = keys;
                 return keys;
@@ -55,7 +55,7 @@ key_data_t wait_for_key(void)
         }
         okeys = keys;
         while (okeys.key2 == keys.key2) {
-            get_keys(&keys);
+            NativeGE_getKeyInput4Ntv(&keys);
         }
         okeys = keys;
         return keys;
@@ -82,7 +82,7 @@ int main()
 	gp.src_clip_w = 256;
 	gp.src_clip_h = 240;
 
-	fs_open("fb.txt", FS_O_CREAT|FS_O_WRONLY|FS_O_TRUNC, &fd);
+	NativeGE_fsOpen("fb.txt", FS_O_CREAT|FS_O_WRONLY|FS_O_TRUNC, &fd);
 	res = emuIfGraphInit(&gp);
 	fs_fprintf(fd, "emuIfGraphInit (%08x) returns %08x\n", (uint32_t)emuIfGraphInit, res);
 	fs_fprintf(fd, "Framebuffer %08x, shadow buffer %08x\n",
@@ -117,7 +117,7 @@ int main()
         char *romname = 0;
         if ((res = select_file(NULL, "pce", &romname)) < 0) {
             fs_fprintf(fd, "select_file() %d\n", res);
-            fs_close(fd);
+            NativeGE_fsClose(fd);
             return 0;
         }
 
@@ -125,7 +125,7 @@ int main()
 	res = load_rom(romname, 0, 0);
 	if (res != 1) {
 		fs_fprintf(fd, "failed to load ROM: %d\n", res);
-		fs_close(fd);
+		NativeGE_fsClose(fd);
 		return 0;
 	}
         free(romname);
@@ -148,11 +148,11 @@ int main()
     fs_fprintf(fd, "system_reset\n");
     system_reset();
     fs_fprintf(fd, "snd.enabled %d, buffer size %d\n", snd.enabled, snd.buffer_size);
-    fs_close(fd);
+    NativeGE_fsClose(fd);
     //return 0;
     
     int frameskip = MAX_FRAMESKIP;
-    uint32_t last_frame = get_time();
+    uint32_t last_frame = NativeGE_getTime();
     int last_spf = 16;
     char fps[16] = "";
     int show_timing = 0;
@@ -162,7 +162,7 @@ int main()
         input.pad[0] = 0;
         /* Do this even when using native input because it won't
            be possible to quit otherwise. */
-        get_keys(&keys);
+        NativeGE_getKeyInput4Ntv(&keys);
         if (NativeGE_getKeyInput) {
             key_data_t nkeys;
             NativeGE_getKeyInput(&nkeys);
@@ -221,7 +221,7 @@ int main()
                 if (emuIfGraphShow() < 0)
                         return 0;
 
-                uint32_t now = get_time();
+                uint32_t now = NativeGE_getTime();
                 int spf = (now - last_frame) / (frameskip + 1);
                 if (show_timing)
                     sprintf(fps, "%d FS %d", spf, frameskip);
@@ -235,7 +235,7 @@ int main()
                 }
 
                 emuIfSoundPlay(&sp);
-                last_frame = get_time();
+                last_frame = NativeGE_getTime();
 
     }
 
