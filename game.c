@@ -3,7 +3,6 @@
 #include <string.h>
 
 #include "libgame.h"
-#include <libemu.h>
 #include "gfx_types.h"
 #include "shared.h"
 #include <sys/stat.h>
@@ -70,7 +69,6 @@ int main()
 
 	// initialize the game api
 	libgame_init();
-	libemu_init();
 
 	graph_params_t gp;
 	/* XXX: This should be 512, not 400. */
