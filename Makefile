@@ -5,10 +5,6 @@
 
 TARGET	= tgemu
 
-TOOLS_DIR = ../../bin
-
-include ../libgame/libgame.cfg
-
 OBJS	= $(RESOBJS) game.o text.o file.o \
   src/fileio.o \
   src/pce.o \
@@ -22,5 +18,5 @@ OBJS	= $(RESOBJS) game.o text.o file.o \
 
 LIBS	= -lgame -lc -lgcc -Lzlib-1.2.7 -lz
 
-include ../libgame/libgame.mk
+include ../../libgame/libgame.mk
 CFLAGS += -Isrc -Isrc/cpu -Izlib-1.2.7 -Ifreetype-flat/include -Isrc/spmp -fno-strict-aliasing -DLSB_FIRST -DFAST_MEM -O3 -funroll-loops -fomit-frame-pointer -DNATIVE_KEYS
