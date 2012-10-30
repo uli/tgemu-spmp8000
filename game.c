@@ -22,12 +22,29 @@ extern display_dev_t *gDisplayDev;
 
 #define MAX_FRAMESKIP 6
 
+uint32_t last_frame;
+
 sound_params_t sp;
-void update_sound(int off)
+#define SOUNDBUF_FRAMES 8
+uint8_t sound_ring[735 * SOUNDBUF_FRAMES];
+int sound_ring_read = 0;
+int sound_ring_write = 0;
+void update_sound(void)
 {
         int i;
         for (i = 0; i < snd.buffer_size; i++) {
-            sp.buf[i + off * snd.buffer_size] = snd.buffer[1][i] >> 8;
+            sound_ring[i + sound_ring_write * snd.buffer_size] = snd.buffer[1][i] >> 8;
+        }
+        sound_ring_write = (sound_ring_write + 1) % SOUNDBUF_FRAMES;
+        if (sound_ring_write >= sound_ring_read + 2 || (sound_ring_write == 0 && sound_ring_read == SOUNDBUF_FRAMES - 2)) {
+            sp.buf = &sound_ring[sound_ring_read * snd.buffer_size];
+            sp.buf_size = 735 * 2;
+            /* emuIfSoundPlay() can block, so we must exclude it from the
+               calculated frame time used to tune frameskip. */
+            uint32_t time = NativeGE_getTime();
+            emuIfSoundPlay(&sp);
+            last_frame += NativeGE_getTime() - time;
+            sound_ring_read = (sound_ring_read + 2) % SOUNDBUF_FRAMES;
         }
 }
 
@@ -91,16 +108,11 @@ int main()
 	fs_fprintf(fd, "Width %d, Height %d\n", gDisplayDev->getWidth(), gDisplayDev->getHeight());
 	fs_fprintf(fd, "LCD format %08x\n", gDisplayDev->getBuffFormat());
 
-	uint16_t sound_buf[44100 * 2]; //735 * 2];//367 * 2];
-	sp.buf = (uint8_t *)sound_buf;
-	sp.buf_size = 735 * (MAX_FRAMESKIP + 1);// * 2;//367 * 2;
 	sp.rate = 22050;
 	sp.channels = 1; //2;
 	sp.depth = 0;
 	sp.callback = 0;
 	fs_fprintf(fd, "emuIfSoundInit returns %d, sp.rate %d\n", emuIfSoundInit(&sp), sp.rate);
-	
-	i=0;
 	
 	res = load_fonts();
 	if (res < 0) {
@@ -152,7 +164,7 @@ int main()
     //return 0;
     
     int frameskip = MAX_FRAMESKIP;
-    uint32_t last_frame = NativeGE_getTime();
+    last_frame = NativeGE_getTime();
     int last_spf = 16;
     char fps[16] = "";
     int show_timing = 0;
@@ -192,11 +204,11 @@ int main()
                 //uint16_t *fb = getLCDShadowBuffer();
                 for (i = 0; i < frameskip; i++) {
                         system_frame(1);
-                        update_sound(i);
+                        update_sound();
                 }
                 bitmap.data = (uint8 *)gp.pixels;
                 system_frame(0);
-                update_sound(i);
+                update_sound();
                 sp.buf_size = 735 * (frameskip + 1);
 
                 if (bitmap.viewport.changed) {
@@ -234,9 +246,7 @@ int main()
                     last_spf = spf;
                 }
 
-                emuIfSoundPlay(&sp);
                 last_frame = NativeGE_getTime();
-
     }
 
     free_fonts();
