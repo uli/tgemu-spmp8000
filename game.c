@@ -165,8 +165,10 @@ int main()
     
     int frameskip = MAX_FRAMESKIP;
     last_frame = NativeGE_getTime();
-    int last_spf = 16;
     char fps[16] = "";
+    float avg = 16.2;
+    int countdown = 0;
+
     int show_timing = 0;
     int show_timing_triggered = 0;
 
@@ -243,16 +245,20 @@ int main()
                         return 0;
 
                 uint32_t now = NativeGE_getTime();
-                int spf = (now - last_frame) / (frameskip + 1);
+                avg = ((avg * (32 - frameskip - 1)) + (now - last_frame)) / 32.0;
+
                 if (show_timing)
-                    sprintf(fps, "%d FS %d", spf, frameskip);
-                if ((spf + last_spf) / 2 <= 15 && frameskip > 0) {
-                    frameskip--;
-                    last_spf = 16;
-                }
-                else if ((spf + last_spf) / 2 >= 17 && frameskip < MAX_FRAMESKIP) {
+                    sprintf(fps, "%dms %d", (int)avg, frameskip);
+
+                if (countdown)
+                    countdown--;
+                if (!countdown && frameskip < MAX_FRAMESKIP && avg > 16.2) {
                     frameskip++;
-                    last_spf = spf;
+                    countdown = 10;
+                }
+                else if (!countdown && frameskip > 0 && avg < 15.5) {
+                    frameskip--;
+                    countdown = 10;
                 }
 
                 last_frame = NativeGE_getTime();
