@@ -168,6 +168,7 @@ int main()
     int last_spf = 16;
     char fps[16] = "";
     int show_timing = 0;
+    int show_timing_triggered = 0;
 
     while (1) {
 
@@ -185,7 +186,15 @@ int main()
             if (nkeys.key2 & (1 << 4))	input.pad[0] |= INPUT_B1;
             if (nkeys.key2 & (1 << 5))	input.pad[0] |= INPUT_B2;
             //if (nkeys.key2 & (1 << 7))	input.pad[0] |= INPUT_UP;
-            if (nkeys.key2 & (1 << 8))	show_timing = !show_timing;
+            if (nkeys.key2 & (1 << 8))	{
+                if (!show_timing_triggered) {
+                    show_timing_triggered = 1;
+                    show_timing = !show_timing;
+                }
+            }
+            else {
+                show_timing_triggered = 0;
+            }
             //if (nkeys.key2 & (1 << 9))	input.pad[0] |= INPUT_UP;
             if (nkeys.key2 & (1 << 10))	input.pad[0] |= INPUT_SELECT;
             if (nkeys.key2 & (1 << 11))	input.pad[0] |= INPUT_RUN;
