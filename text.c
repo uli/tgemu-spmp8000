@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <libgame.h>
 
-//#define CHINESE
+// #define CHINESE
 
 static uint8_t *asc12_font = 0;
 #ifdef CHINESE
@@ -13,31 +13,31 @@ static uint16_t *hzx12_font = 0;
 
 int load_fonts(void)
 {
-        int fd = open("/Rom/mw/fonts/CHINESE/ASC12", O_RDONLY);
-        if (!fd) {
-            return -1;
-        }
-        struct stat st;
-        fstat(fd, &st);
-        asc12_font = malloc(st.st_size);
-        if (!asc12_font || read(fd, asc12_font, st.st_size) != st.st_size) {
-            return -2;
-        }
-        close(fd);
+    int fd = open("/Rom/mw/fonts/CHINESE/ASC12", O_RDONLY);
+    if (!fd) {
+        return -1;
+    }
+    struct stat st;
+    fstat(fd, &st);
+    asc12_font = malloc(st.st_size);
+    if (!asc12_font || read(fd, asc12_font, st.st_size) != st.st_size) {
+        return -2;
+    }
+    close(fd);
 
 #ifdef CHINESE
-        fd = open("/Rom/mw/fonts/CHINESE/HZX12", O_RDONLY);
-        if (!fd) {
-            return -3;
-        }
-        fstat(fd, &st);
-        hzx12_font = malloc(st.st_size);
-        if (!hzx12_font || read(fd, hzx12_font, st.st_size) != st.st_size) {
-            return -4;
-        }
-        close(fd);
+    fd = open("/Rom/mw/fonts/CHINESE/HZX12", O_RDONLY);
+    if (!fd) {
+        return -3;
+    }
+    fstat(fd, &st);
+    hzx12_font = malloc(st.st_size);
+    if (!hzx12_font || read(fd, hzx12_font, st.st_size) != st.st_size) {
+        return -4;
+    }
+    close(fd);
 #endif
-        return 0;
+    return 0;
 }
 
 void free_fonts(void)
@@ -53,8 +53,7 @@ void free_fonts(void)
 int draw_character(uint32_t codepoint, int x, int y)
 {
     return draw_character_ex(gDisplayDev->getShadowBuffer(),
-                      gDisplayDev->getWidth(),
-                      codepoint, x, y);
+                             gDisplayDev->getWidth(), codepoint, x, y);
 }
 
 int draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, int y)
@@ -97,9 +96,7 @@ render_asc:
 
 int render_text(const char *t, int x, int y)
 {
-    return render_text_ex(gDisplayDev->getShadowBuffer(),
-                          gDisplayDev->getWidth(),
-                          t, x, y);
+    return render_text_ex(gDisplayDev->getShadowBuffer(), gDisplayDev->getWidth(), t, x, y);
 }
 
 int render_text_ex(uint16_t *buf, int width, const char *t, int x, int y)
