@@ -87,9 +87,10 @@ int main()
     libgame_init();
 
     graph_params_t gp;
-    /* XXX: This should be 512, not 400. */
-#define BMWIDTH (32 + 512 + 32)
-    gp.pixels = malloc(BMWIDTH * 256 * 2);
+#define VISIBLEWIDTH 512
+#define BMWIDTH (32 + VISIBLEWIDTH + 32)
+    /* Allocate a quarter more for non-widescreen mode (see below). */
+    gp.pixels = malloc((BMWIDTH + VISIBLEWIDTH / 4) * 256 * 2);
     gp.width = BMWIDTH;
     gp.height = 256;
     gp.unknown_flag = 0;
@@ -146,9 +147,9 @@ int main()
     bitmap.height = 256;
     bitmap.depth = 16;
     bitmap.granularity = (bitmap.depth >> 3);
-    bitmap.data = (uint8 *) gp.pixels;
+    bitmap.data = (uint8 *)gp.pixels;
 
-    bitmap.pitch = (bitmap.width * bitmap.granularity);
+    bitmap.pitch = bitmap.width * bitmap.granularity;
     bitmap.viewport.w = 256;
     bitmap.viewport.h = 240;
     bitmap.viewport.x = 0x20;
@@ -171,6 +172,9 @@ int main()
 
     int show_timing = 0;
     int show_timing_triggered = 0;
+
+    int widescreen = 1;
+    int widescreen_triggered = 0;
 
     while (1) {
 
@@ -203,6 +207,38 @@ int main()
             else {
                 show_timing_triggered = 0;
             }
+            if (nkeys.key2 & (1 << 9)) {
+                if (!widescreen_triggered) {
+                    widescreen_triggered = 1;
+                    widescreen = !widescreen;
+                    /* Widescreen mode is the "normal" mode of rendering the
+                       screen in which the visible graphics are blitted as
+                       they are to the full size of the screen. To achieve a
+                       pillarboxed rendering in the original aspect ratio we
+                       make the source bitmap wider, have the emulator render
+                       into the middle of this bitmap, and then blit the
+                       entire bitmap to the screen. */
+                    if (widescreen) {
+                        bitmap.pitch = (bitmap.width * bitmap.granularity);
+                        bitmap.data = (uint8 *)gp.pixels;
+                        gp.width = BMWIDTH;
+                        gp.src_clip_w = bitmap.viewport.w;
+                    }
+                    else {
+                        /* use 1/4 wider bitmap for emulator rendering */
+                        bitmap.pitch = ((bitmap.width + VISIBLEWIDTH / 4) * bitmap.granularity);
+                        /* render with an offset of 1/8 screen size to the right */
+                        bitmap.data = (uint8 *)(gp.pixels + bitmap.viewport.w / 8);
+                        /* blit 1/4 wider bitmap */
+                        gp.width = BMWIDTH + VISIBLEWIDTH / 4;
+                        gp.src_clip_w = bitmap.viewport.w + bitmap.viewport.w / 4;
+                    }
+                    emuIfGraphChgView(&gp);
+                }
+            }
+            else {
+                widescreen_triggered = 0;
+            }
             // if (nkeys.key2 & (1 << 9)) input.pad[0] |= INPUT_UP;
             if (nkeys.key2 & (1 << 10))
                 input.pad[0] |= INPUT_SELECT;
@@ -226,13 +262,11 @@ int main()
             if (keys.key2 & KEY_START)
                 input.pad[0] |= INPUT_RUN;
         }
-        // bitmap.data = (uint8 *)getLCDShadowBuffer();
-        // uint16_t *fb = getLCDShadowBuffer();
+
         for (i = 0; i < frameskip; i++) {
             system_frame(1);
             update_sound();
         }
-        bitmap.data = (uint8 *) gp.pixels;
         system_frame(0);
         update_sound();
         sp.buf_size = 735 * (frameskip + 1);
@@ -241,8 +275,15 @@ int main()
             gp.src_clip_x = bitmap.viewport.x;
             gp.src_clip_y = bitmap.viewport.y;
             gp.src_clip_w = bitmap.viewport.w;
+            /* see above for explanation of non-widescreen rendering */
+            if (!widescreen)
+                gp.src_clip_w += bitmap.viewport.w / 4;
             gp.src_clip_h = bitmap.viewport.h;
             emuIfGraphChgView(&gp);
+            if (!widescreen)
+                bitmap.data = (uint8 *)(gp.pixels + bitmap.viewport.w / 8);
+            else
+                bitmap.data = (uint8 *)gp.pixels;
             bitmap.viewport.changed = 0;
         }
 
@@ -255,7 +296,23 @@ int main()
 #endif
 
         if (show_timing)
-            render_text_ex(gp.pixels, BMWIDTH, fps, bitmap.viewport.x, bitmap.viewport.y);
+            render_text_ex((uint16_t *)bitmap.data, bitmap.pitch / 2, fps, bitmap.viewport.x, bitmap.viewport.y);
+        if (!widescreen) {
+            /* In non-widescreen mode, the black bars to the left and right
+               are filled with non-visible graphic artifacts left there by
+               the emulator, so we have to blank them ourselves. */
+            int i;
+            uint16_t *bar_left = gp.pixels + bitmap.viewport.x + (bitmap.viewport.y) * bitmap.pitch / 2;
+            uint16_t *bar_right = bar_left + bitmap.viewport.w + bitmap.viewport.w / 8;
+            uint32_t pitch = bitmap.pitch / 2;
+            uint32_t width = bitmap.viewport.w / 4;
+            for (i = 0; i < bitmap.viewport.h; i++) {
+                memset(bar_left, 0, width);
+                memset(bar_right, 0, width);
+                bar_left += pitch;
+                bar_right += pitch;
+            }
+        }
         if (emuIfGraphShow() < 0)
             return 0;
 
