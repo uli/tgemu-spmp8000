@@ -10,8 +10,6 @@
 #include "text.h"
 #include "file.h"
 
-extern void **ftab;
-
 extern display_dev_t *gDisplayDev;
 
 #define fs_fprintf(fd, x...) { \
