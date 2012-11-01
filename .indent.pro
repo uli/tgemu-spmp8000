@@ -12,6 +12,8 @@
 -il0
 -ncs
 -bap
+-nfc1
+-sob
 -T uint8_t
 -T uint16_t
 -T uint32_t
