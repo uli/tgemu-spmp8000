@@ -107,6 +107,7 @@ int main()
                gDisplayDev->getFrameBuffer(), gDisplayDev->getShadowBuffer());
     fs_fprintf(fd, "Width %d, Height %d\n", gDisplayDev->getWidth(), gDisplayDev->getHeight());
     fs_fprintf(fd, "LCD format %08x\n", gDisplayDev->getBuffFormat());
+    fs_fprintf(fd, "ARM frequency %d\n", GetArmCoreFreq());
 
     sp.rate = 22050;
     sp.channels = 1;            // 2;
