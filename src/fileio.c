@@ -2,6 +2,7 @@
 #include "shared.h"
 #include "pcecrc.h"
 #include <libgame.h>
+#include <fcntl.h>
 
 /* Name of the loaded file */
 char game_name[0x100];
@@ -89,7 +90,7 @@ int load_rom(char *filename, int split, int flip)
         int gd = 0;
 
         /* Open file */
-        if (NativeGE_fsOpen(filename, FS_O_RDONLY, &gd))
+        if ((gd = open(filename, O_RDONLY)) < 0)
           return (2);
 
         /* Get file size */
@@ -100,32 +101,17 @@ int load_rom(char *filename, int split, int flip)
         /* Allocate file data buffer */
         buf = malloc(size);
         if(!buf) {
-            NativeGE_fsClose(gd);
+            close(gd);
             return (0);
         }
 
         /* Read file data */
-        int res = 0;
-        
-#if 0
-        uint8 *bbuf = buf;
-        while (size) {
-            if (NativeGE_fsRead(gd, bbuf, 4096, &res)) {
-                return 3;
-            }
-            if (res != 4096)
-                return 4;
-            size -= res;
-            bbuf += res;
-        }
-#else
-        NativeGE_fsRead(gd, buf, size, &res);
+        int res = read(gd, buf, size);
         if (res != size)
             return 42;
-#endif
 
         /* Close file */
-        NativeGE_fsClose(gd);
+        close(gd);
     }
 
     /* Check for 512-byte header */
@@ -196,24 +182,20 @@ int load_rom(char *filename, int split, int flip)
 
 int load_file(char *filename, char *buf, int size)
 {
-    int fd = 0;
-    NativeGE_fsOpen(filename, FS_O_RDONLY, &fd);
+    int fd = open(filename, O_RDONLY);
     if(!fd) return (0);
-    int res;
-    NativeGE_fsRead(fd, buf, size, &res);
-    NativeGE_fsClose(fd);
+    read(fd, buf, size);
+    close(fd);
     return (1);
 }
 
 
 int save_file(char *filename, uint8 *buf, int size)
 {
-    int fd = 0;
-    NativeGE_fsOpen(filename, FS_O_WRONLY, &fd);
+    int fd = open(filename, O_WRONLY, 0644);
     if(!fd) return (0);
-    int res;
-    NativeGE_fsWrite(fd, buf, size, &res);
-    NativeGE_fsClose(fd);
+    write(fd, buf, size);
+    close(fd);
     return (1);
 }
 
