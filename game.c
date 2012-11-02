@@ -181,28 +181,57 @@ int main()
     int widescreen = 1;
     int widescreen_triggered = 0;
 
+    /* Set device-specific key mapping. */
+    int widescreen_key = 0;
+    int fps_key = 0;
+    int select_key = 0;
+    /* The "start" key triggers GE_KEY_START on the A1000, but on the
+       JXD100, it's the "square" key.  Not a dealbreaker, but we should
+       support the real start key as well.  */
+    int start_key = 0;
+    
+    switch (libgame_system_id) {
+        case SYS_JXD_A1000:
+            widescreen_key = RAW_A1000_KEY_L;
+            fps_key = RAW_A1000_KEY_R;
+            select_key = RAW_A1000_KEY_SELECT;
+            break;
+        case SYS_JXD_100:
+            select_key = RAW_JXD100_KEY_SELECT;
+            fps_key = RAW_JXD100_KEY_POWER;
+            start_key = RAW_JXD100_KEY_START;
+            break;
+        default:
+            break;
+    }
+    
     while (1) {
 
         input.pad[0] = 0;
         /* Do this even when using native input because it won't be possible
            to quit otherwise. */
         NativeGE_getKeyInput4Ntv(&keys);
+        if (keys.key2 & GE_KEY_UP)
+            input.pad[0] |= INPUT_UP;
+        if (keys.key2 & GE_KEY_DOWN)
+            input.pad[0] |= INPUT_DOWN;
+        if (keys.key2 & GE_KEY_LEFT)
+            input.pad[0] |= INPUT_LEFT;
+        if (keys.key2 & GE_KEY_RIGHT)
+            input.pad[0] |= INPUT_RIGHT;
+        if (keys.key2 & GE_KEY_X)
+            input.pad[0] |= INPUT_B2;
+        if (keys.key2 & GE_KEY_O)
+            input.pad[0] |= INPUT_B1;
+        if (keys.key2 & GE_KEY_START)
+            input.pad[0] |= INPUT_RUN;
+        
+        /* These are all the keys we can use through the 4Ntv interface.
+           To get access to the rest, we have to use the device-specific
+           interface, if available. */
         if (NativeGE_getKeyInput) {
             NativeGE_getKeyInput(&nkeys);
-            if (nkeys.key2 & (1 << 0))
-                input.pad[0] |= INPUT_UP;
-            if (nkeys.key2 & (1 << 1))
-                input.pad[0] |= INPUT_DOWN;
-            if (nkeys.key2 & (1 << 2))
-                input.pad[0] |= INPUT_LEFT;
-            if (nkeys.key2 & (1 << 3))
-                input.pad[0] |= INPUT_RIGHT;
-            if (nkeys.key2 & (1 << 4))
-                input.pad[0] |= INPUT_B1;
-            if (nkeys.key2 & (1 << 5))
-                input.pad[0] |= INPUT_B2;
-            // if (nkeys.key2 & (1 << 7)) input.pad[0] |= INPUT_UP;
-            if (nkeys.key2 & (1 << 8)) {
+            if (nkeys.key2 & fps_key) {
                 if (!show_timing_triggered) {
                     show_timing_triggered = 1;
                     show_timing = !show_timing;
@@ -211,7 +240,7 @@ int main()
             else {
                 show_timing_triggered = 0;
             }
-            if (nkeys.key2 & (1 << 9)) {
+            if (nkeys.key2 & widescreen_key) {
                 if (!widescreen_triggered) {
                     widescreen_triggered = 1;
                     widescreen = !widescreen;
@@ -243,27 +272,9 @@ int main()
             else {
                 widescreen_triggered = 0;
             }
-            // if (nkeys.key2 & (1 << 9)) input.pad[0] |= INPUT_UP;
-            if (nkeys.key2 & (1 << 10))
+            if (nkeys.key2 & select_key)
                 input.pad[0] |= INPUT_SELECT;
-            if (nkeys.key2 & (1 << 11))
-                input.pad[0] |= INPUT_RUN;
-        }
-        else {
-            if (keys.key2 & KEY_UP)
-                input.pad[0] |= INPUT_UP;
-            if (keys.key2 & KEY_DOWN)
-                input.pad[0] |= INPUT_DOWN;
-            if (keys.key2 & KEY_LEFT)
-                input.pad[0] |= INPUT_LEFT;
-            if (keys.key2 & KEY_RIGHT)
-                input.pad[0] |= INPUT_RIGHT;
-            if (keys.key2 & KEY_X)
-                input.pad[0] |= INPUT_B2;
-            if (keys.key2 & KEY_O)
-                input.pad[0] |= INPUT_B1;
-            // if(keys.key2 & KEY_D) input.pad[0] |= INPUT_SELECT;
-            if (keys.key2 & KEY_START)
+            if (nkeys.key2 & start_key)
                 input.pad[0] |= INPUT_RUN;
         }
 
