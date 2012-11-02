@@ -82,17 +82,17 @@ reload_dir:
         cache_sync();
         gDisplayDev->lcdFlip();
         key_data_t keys = wait_for_key();
-        if ((keys.key2 & KEY_UP) && current_entry > 0) {
+        if ((keys.key2 & GE_KEY_UP) && current_entry > 0) {
             current_entry--;
             if (current_entry < current_top)
                 current_top--;
         }
-        else if ((keys.key2 & KEY_DOWN) && current_entry < dent_count - 1) {
+        else if ((keys.key2 & GE_KEY_DOWN) && current_entry < dent_count - 1) {
             current_entry++;
             if ((current_entry - current_top + 1) * 12 > screen_height)
                 current_top++;
         }
-        else if (keys.key2 & KEY_O) {
+        else if (keys.key2 & GE_KEY_O) {
             if (_ECOS_S_ISDIR(stats[current_entry].st_mode)) {
                 _ecos_chdir(dents[current_entry].d_name);
                 goto reload_dir;
