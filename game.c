@@ -19,6 +19,7 @@ extern display_dev_t *gDisplayDev;
 }
 
 #define MAX_FRAMESKIP 8
+#define SHOW_KEYS
 
 uint32_t last_frame;
 
@@ -81,7 +82,7 @@ int main()
 {
     int i;
     int fd, res;
-    key_data_t keys;
+    key_data_t keys, nkeys;
 
     // initialize the game api
     libgame_init();
@@ -166,7 +167,11 @@ int main()
 
     int frameskip = MAX_FRAMESKIP;
     last_frame = NativeGE_getTime();
+#ifdef SHOW_KEYS
+    char fps[32] = "";
+#else
     char fps[16] = "";
+#endif
     float avg = 16.2;
     int countdown = 0;
 
@@ -183,7 +188,6 @@ int main()
            to quit otherwise. */
         NativeGE_getKeyInput4Ntv(&keys);
         if (NativeGE_getKeyInput) {
-            key_data_t nkeys;
             NativeGE_getKeyInput(&nkeys);
             if (nkeys.key2 & (1 << 0))
                 input.pad[0] |= INPUT_UP;
@@ -320,7 +324,11 @@ int main()
         avg = ((avg * (32 - frameskip - 1)) + (now - last_frame)) / 32.0;
 
         if (show_timing)
+#ifdef SHOW_KEYS
+            sprintf(fps, "%dms %d k%d/%d", (int)avg, frameskip, keys.key2, nkeys.key2);
+#else
             sprintf(fps, "%dms %d", (int)avg, frameskip);
+#endif
 
         if (countdown)
             countdown--;
