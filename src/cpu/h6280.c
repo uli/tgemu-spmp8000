@@ -125,23 +125,19 @@ int h6280_execute(int cycles)
 	/* Execute instructions */
 	do
     {
-		h6280.ppc = h6280.pc;
+		int i;
+		for (i = 0; i < 8; i++) {
+			/* Speed hack: executing several insns at a time speeds things
+			   up considerably. No (additional) incompatibilities
+			   have been observed in casual testing. */
+			h6280.ppc = h6280.pc;
 
-		/* Execute 1 instruction */
-		in=RDOP();
-		PCW++;
-		insnh6280[in]();
-
-		/* Speed hack: executing two insns at a time speeds things
-		   up considerably. No (additional) incompatibilities
-		   have been observed in casual testing. */
-		h6280.ppc = h6280.pc;
-
-		/* Execute 1 instruction */
-		in=RDOP();
-		PCW++;
-		insnh6280[in]();
-
+			/* Execute 1 instruction */
+			in=RDOP();
+			PCW++;
+			insnh6280[in]();
+		}
+		
 		/* Check internal timer */
 		if(h6280.timer_status)
 		{
