@@ -48,6 +48,101 @@ void update_sound(void)
     }
 }
 
+graph_params_t gp;
+#define VISIBLEWIDTH 512	/* visible horizontal size of source bitmap */
+#define BMWIDTH (32 + VISIBLEWIDTH + 32)	/* total horizontal size of source bitmap */
+
+int show_timing = 0;
+int widescreen = 1;
+
+/* Device-specific key mapping. */
+int widescreen_key = 0;
+int fps_key = 0;
+int select_key = 0;
+/* The "start" key triggers GE_KEY_START on the A1000, but on the
+   JXD100, it's the "square" key.  Not a dealbreaker, but we should
+   support the real start key as well.  */
+int start_key = 0;
+
+key_data_t keys, nkeys;
+
+void update_input(void)
+{
+    static int show_timing_triggered = 0;
+    static int widescreen_triggered = 0;
+
+    input.pad[0] = 0;
+    /* Do this even when using native input because it won't be possible
+       to quit otherwise. */
+    NativeGE_getKeyInput4Ntv(&keys);
+    if (keys.key2 & GE_KEY_UP)
+        input.pad[0] |= INPUT_UP;
+    if (keys.key2 & GE_KEY_DOWN)
+        input.pad[0] |= INPUT_DOWN;
+    if (keys.key2 & GE_KEY_LEFT)
+        input.pad[0] |= INPUT_LEFT;
+    if (keys.key2 & GE_KEY_RIGHT)
+        input.pad[0] |= INPUT_RIGHT;
+    if (keys.key2 & GE_KEY_X)
+        input.pad[0] |= INPUT_B2;
+    if (keys.key2 & GE_KEY_O)
+        input.pad[0] |= INPUT_B1;
+    if (keys.key2 & GE_KEY_START)
+        input.pad[0] |= INPUT_RUN;
+    
+    /* These are all the keys we can use through the 4Ntv interface.
+       To get access to the rest, we have to use the device-specific
+       interface, if available. */
+    if (NativeGE_getKeyInput) {
+        NativeGE_getKeyInput(&nkeys);
+        if (nkeys.key2 & fps_key) {
+            if (!show_timing_triggered) {
+                show_timing_triggered = 1;
+                show_timing = !show_timing;
+            }
+        }
+        else {
+            show_timing_triggered = 0;
+        }
+        if (nkeys.key2 & widescreen_key) {
+            if (!widescreen_triggered) {
+                widescreen_triggered = 1;
+                widescreen = !widescreen;
+                /* Widescreen mode is the "normal" mode of rendering the
+                   screen in which the visible graphics are blitted as
+                   they are to the full size of the screen. To achieve a
+                   pillarboxed rendering in the original aspect ratio we
+                   make the source bitmap wider, have the emulator render
+                   into the middle of this bitmap, and then blit the
+                   entire bitmap to the screen. */
+                if (widescreen) {
+                    bitmap.pitch = (bitmap.width * bitmap.granularity);
+                    bitmap.data = (uint8 *)gp.pixels;
+                    gp.width = BMWIDTH;
+                    gp.src_clip_w = bitmap.viewport.w;
+                }
+                else {
+                    /* use 1/4 wider bitmap for emulator rendering */
+                    bitmap.pitch = ((bitmap.width + VISIBLEWIDTH / 4) * bitmap.granularity);
+                    /* render with an offset of 1/8 screen size to the right */
+                    bitmap.data = (uint8 *)(gp.pixels + bitmap.viewport.w / 8);
+                    /* blit 1/4 wider bitmap */
+                    gp.width = BMWIDTH + VISIBLEWIDTH / 4;
+                    gp.src_clip_w = bitmap.viewport.w + bitmap.viewport.w / 4;
+                }
+                emuIfGraphChgView(&gp);
+            }
+        }
+        else {
+            widescreen_triggered = 0;
+        }
+        if (nkeys.key2 & select_key)
+            input.pad[0] |= INPUT_SELECT;
+        if (nkeys.key2 & start_key)
+            input.pad[0] |= INPUT_RUN;
+    }
+}
+
 key_data_t wait_for_key(void)
 {
     static int auto_repeat = 0;
@@ -82,14 +177,10 @@ int main()
 {
     int i;
     int fd, res;
-    key_data_t keys, nkeys;
 
     // initialize the game api
     libgame_init();
 
-    graph_params_t gp;
-#define VISIBLEWIDTH 512
-#define BMWIDTH (32 + VISIBLEWIDTH + 32)
     /* Allocate a quarter more for non-widescreen mode (see below). */
     gp.pixels = malloc((BMWIDTH + VISIBLEWIDTH / 4) * 256 * 2);
     gp.width = BMWIDTH;
@@ -175,21 +266,6 @@ int main()
     float avg = 16.2;
     int countdown = 0;
 
-    int show_timing = 0;
-    int show_timing_triggered = 0;
-
-    int widescreen = 1;
-    int widescreen_triggered = 0;
-
-    /* Set device-specific key mapping. */
-    int widescreen_key = 0;
-    int fps_key = 0;
-    int select_key = 0;
-    /* The "start" key triggers GE_KEY_START on the A1000, but on the
-       JXD100, it's the "square" key.  Not a dealbreaker, but we should
-       support the real start key as well.  */
-    int start_key = 0;
-    
     switch (libgame_system_id) {
         case SYS_JXD_A1000:
             widescreen_key = RAW_A1000_KEY_L;
@@ -206,77 +282,7 @@ int main()
     }
     
     while (1) {
-
-        input.pad[0] = 0;
-        /* Do this even when using native input because it won't be possible
-           to quit otherwise. */
-        NativeGE_getKeyInput4Ntv(&keys);
-        if (keys.key2 & GE_KEY_UP)
-            input.pad[0] |= INPUT_UP;
-        if (keys.key2 & GE_KEY_DOWN)
-            input.pad[0] |= INPUT_DOWN;
-        if (keys.key2 & GE_KEY_LEFT)
-            input.pad[0] |= INPUT_LEFT;
-        if (keys.key2 & GE_KEY_RIGHT)
-            input.pad[0] |= INPUT_RIGHT;
-        if (keys.key2 & GE_KEY_X)
-            input.pad[0] |= INPUT_B2;
-        if (keys.key2 & GE_KEY_O)
-            input.pad[0] |= INPUT_B1;
-        if (keys.key2 & GE_KEY_START)
-            input.pad[0] |= INPUT_RUN;
-        
-        /* These are all the keys we can use through the 4Ntv interface.
-           To get access to the rest, we have to use the device-specific
-           interface, if available. */
-        if (NativeGE_getKeyInput) {
-            NativeGE_getKeyInput(&nkeys);
-            if (nkeys.key2 & fps_key) {
-                if (!show_timing_triggered) {
-                    show_timing_triggered = 1;
-                    show_timing = !show_timing;
-                }
-            }
-            else {
-                show_timing_triggered = 0;
-            }
-            if (nkeys.key2 & widescreen_key) {
-                if (!widescreen_triggered) {
-                    widescreen_triggered = 1;
-                    widescreen = !widescreen;
-                    /* Widescreen mode is the "normal" mode of rendering the
-                       screen in which the visible graphics are blitted as
-                       they are to the full size of the screen. To achieve a
-                       pillarboxed rendering in the original aspect ratio we
-                       make the source bitmap wider, have the emulator render
-                       into the middle of this bitmap, and then blit the
-                       entire bitmap to the screen. */
-                    if (widescreen) {
-                        bitmap.pitch = (bitmap.width * bitmap.granularity);
-                        bitmap.data = (uint8 *)gp.pixels;
-                        gp.width = BMWIDTH;
-                        gp.src_clip_w = bitmap.viewport.w;
-                    }
-                    else {
-                        /* use 1/4 wider bitmap for emulator rendering */
-                        bitmap.pitch = ((bitmap.width + VISIBLEWIDTH / 4) * bitmap.granularity);
-                        /* render with an offset of 1/8 screen size to the right */
-                        bitmap.data = (uint8 *)(gp.pixels + bitmap.viewport.w / 8);
-                        /* blit 1/4 wider bitmap */
-                        gp.width = BMWIDTH + VISIBLEWIDTH / 4;
-                        gp.src_clip_w = bitmap.viewport.w + bitmap.viewport.w / 4;
-                    }
-                    emuIfGraphChgView(&gp);
-                }
-            }
-            else {
-                widescreen_triggered = 0;
-            }
-            if (nkeys.key2 & select_key)
-                input.pad[0] |= INPUT_SELECT;
-            if (nkeys.key2 & start_key)
-                input.pad[0] |= INPUT_RUN;
-        }
+        update_input();
 
         for (i = 0; i < frameskip; i++) {
             system_frame(1);
