@@ -30,6 +30,8 @@ int sound_ring_read = 0;
 int sound_ring_write = 0;
 void update_sound(void)
 {
+    if (!snd.enabled)
+        return;
     int i;
     for (i = 0; i < snd.buffer_size; i++) {
         sound_ring[i + sound_ring_write * snd.buffer_size] = snd.buffer[1][i] >> 8;
@@ -59,6 +61,7 @@ int widescreen = 1;
 int widescreen_key = 0;
 int fps_key = 0;
 int select_key = 0;
+int sound_key = 0;
 /* The "start" key triggers GE_KEY_START on the A1000, but on the
    JXD100, it's the "square" key.  Not a dealbreaker, but we should
    support the real start key as well.  */
@@ -70,6 +73,7 @@ void update_input(void)
 {
     static int show_timing_triggered = 0;
     static int widescreen_triggered = 0;
+    static int sound_triggered = 0;
 
     input.pad[0] = 0;
     /* Do this even when using native input because it won't be possible
@@ -140,6 +144,14 @@ void update_input(void)
             input.pad[0] |= INPUT_SELECT;
         if (nkeys.key2 & start_key)
             input.pad[0] |= INPUT_RUN;
+        if (nkeys.key2 & sound_key) {
+            if (!sound_triggered) {
+                snd.enabled = !snd.enabled;
+                sound_triggered = 1;
+            }
+        }
+        else
+            sound_triggered = 0;
     }
 }
 
@@ -280,11 +292,13 @@ int main()
             widescreen_key = RAW_A1000_KEY_L;
             fps_key = RAW_A1000_KEY_R;
             select_key = RAW_A1000_KEY_SELECT;
+            sound_key = RAW_A1000_KEY_TRIANGLE;
             break;
         case SYS_JXD_100:
             select_key = RAW_JXD100_KEY_SELECT;
             fps_key = RAW_JXD100_KEY_POWER;
             start_key = RAW_JXD100_KEY_START;
+            sound_key = RAW_JXD100_KEY_TRIANGLE;
             break;
         default:
             break;
