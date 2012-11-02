@@ -13,10 +13,10 @@ OBJS	= $(RESOBJS) game.o text.o file.o \
   src/vdc.o \
   src/cpu/h6280.o \
 
-LIBS	= -lgame -lc -lgcc -Lzlib-1.2.7 -lz
+LIBS	= -lgame -lc -lgcc -lz
 
 include ../../libgame/libgame.mk
-CFLAGS += -Isrc -Isrc/cpu -Izlib-1.2.7 -fno-strict-aliasing -DLSB_FIRST -DFAST_MEM -O3 -funroll-loops -fomit-frame-pointer -DNATIVE_KEYS
+CFLAGS += -Isrc -Isrc/cpu -DLSB_FIRST -DFAST_MEM -O3 -funroll-loops -fomit-frame-pointer
 
 ifeq ($(PROFILE),1)
 CFLAGS += -finstrument-functions -DPROFILE
