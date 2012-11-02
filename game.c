@@ -287,6 +287,11 @@ int main()
         for (i = 0; i < frameskip; i++) {
             system_frame(1);
             update_sound();
+            /* At high frameskips we have to update the input once in a while,
+               or the game will become unresponsive and key presses may be
+               lost. */
+            if ((i & 3) == 3)
+                update_input();
         }
         system_frame(0);
         update_sound();
