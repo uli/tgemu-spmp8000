@@ -173,11 +173,20 @@ key_data_t wait_for_key(void)
     return keys;
 }
 
+#ifdef PROFILE
+void init_profile(void);
+void dump_profile(void);
+#endif
+
 int main()
 {
     int i;
     int fd, res;
 
+#ifdef PROFILE
+    init_profile();
+#endif
+    
     // initialize the game api
     libgame_init();
 
@@ -321,8 +330,13 @@ int main()
         }
 #endif
 
-        if (show_timing)
+        if (show_timing) {
             render_text_ex((uint16_t *)bitmap.data, bitmap.pitch / 2, fps, bitmap.viewport.x, bitmap.viewport.y);
+#ifdef PROFILE
+            dump_profile();
+            return 0;
+#endif
+        }
         if (!widescreen) {
             /* In non-widescreen mode, the black bars to the left and right
                are filled with non-visible graphic artifacts left there by

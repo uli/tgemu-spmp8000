@@ -1,7 +1,4 @@
-
-#ifdef $(NEWLIB)
-#undef $(NEWLIB)
-#endif
+PROFILE=0
 
 TARGET	= tgemu
 
@@ -20,3 +17,10 @@ LIBS	= -lgame -lc -lgcc -Lzlib-1.2.7 -lz
 
 include ../../libgame/libgame.mk
 CFLAGS += -Isrc -Isrc/cpu -Izlib-1.2.7 -fno-strict-aliasing -DLSB_FIRST -DFAST_MEM -O3 -funroll-loops -fomit-frame-pointer -DNATIVE_KEYS
+
+ifeq ($(PROFILE),1)
+CFLAGS += -finstrument-functions -DPROFILE
+OBJS += profile.o
+profile.o: profile.c
+	$(TOOLCHAIN)gcc -O2 -c $< -o $@
+endif
