@@ -18,7 +18,7 @@ extern display_dev_t *gDisplayDev;
   NativeGE_fsWrite(fd, buf, strlen(buf), &_res); \
 }
 
-#define MAX_FRAMESKIP 6
+#define MAX_FRAMESKIP 8
 
 uint32_t last_frame;
 
