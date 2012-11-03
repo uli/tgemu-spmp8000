@@ -193,7 +193,6 @@ void dump_profile(void);
 
 int main()
 {
-    int i;
     int fd, res;
 
 #ifdef PROFILE
@@ -285,7 +284,6 @@ int main()
 #else
     char fps[16] = "";
 #endif
-    int countdown = 0;
 
     switch (libgame_system_id) {
         case SYS_JXD_1000:
