@@ -288,6 +288,7 @@ int main()
     int countdown = 0;
 
     switch (libgame_system_id) {
+        case SYS_JXD_1000:
         case SYS_JXD_A1000:
             widescreen_key = RAW_A1000_KEY_L;
             fps_key = RAW_A1000_KEY_R;
