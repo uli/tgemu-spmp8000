@@ -21,13 +21,24 @@ extern display_dev_t *gDisplayDev;
 #define MAX_FRAMESKIP 8
 #define SHOW_KEYS
 
-uint32_t last_frame;
-
 sound_params_t sp;
-#define SOUNDBUF_FRAMES 8
+#define SOUNDBUF_FRAMES 16
 uint8_t sound_ring[735 * SOUNDBUF_FRAMES];
 int sound_ring_read = 0;
 int sound_ring_write = 0;
+void sync_sound(void)
+{
+    if (sound_ring_write >= sound_ring_read + 2 ||
+        (sound_ring_write == 0 && sound_ring_read == SOUNDBUF_FRAMES - 2)) {
+        sp.buf = &sound_ring[sound_ring_read * snd.buffer_size];
+        sp.buf_size = 735 * 2;
+        /* emuIfSoundPlay() can block, so we must exclude it from the
+           calculated frame time used to tune frameskip. */
+        emuIfSoundPlay(&sp);
+        sound_ring_read = (sound_ring_read + 2) % SOUNDBUF_FRAMES;
+    }
+}
+
 void update_sound(void)
 {
     if (!snd.enabled)
@@ -37,17 +48,7 @@ void update_sound(void)
         sound_ring[i + sound_ring_write * snd.buffer_size] = snd.buffer[1][i] >> 8;
     }
     sound_ring_write = (sound_ring_write + 1) % SOUNDBUF_FRAMES;
-    if (sound_ring_write >= sound_ring_read + 2 ||
-        (sound_ring_write == 0 && sound_ring_read == SOUNDBUF_FRAMES - 2)) {
-        sp.buf = &sound_ring[sound_ring_read * snd.buffer_size];
-        sp.buf_size = 735 * 2;
-        /* emuIfSoundPlay() can block, so we must exclude it from the
-           calculated frame time used to tune frameskip. */
-        uint32_t time = NativeGE_getTime();
-        emuIfSoundPlay(&sp);
-        last_frame += NativeGE_getTime() - time;
-        sound_ring_read = (sound_ring_read + 2) % SOUNDBUF_FRAMES;
-    }
+    sync_sound();
 }
 
 graph_params_t gp;
@@ -279,13 +280,11 @@ int main()
     // return 0;
 
     int frameskip = MAX_FRAMESKIP;
-    last_frame = NativeGE_getTime();
 #ifdef SHOW_KEYS
     char fps[32] = "";
 #else
     char fps[16] = "";
 #endif
-    float avg = 16.2;
     int countdown = 0;
 
     switch (libgame_system_id) {
@@ -307,20 +306,11 @@ int main()
     }
     
     while (1) {
+        uint32_t total_time = 0;
+        uint32_t start_time = libgame_utime();
         update_input();
 
-        for (i = 0; i < frameskip; i++) {
-            system_frame(1);
-            update_sound();
-            /* At high frameskips we have to update the input once in a while,
-               or the game will become unresponsive and key presses may be
-               lost. */
-            if ((i & 3) == 3)
-                update_input();
-        }
         system_frame(0);
-        update_sound();
-        sp.buf_size = 735 * (frameskip + 1);
 
         if (bitmap.viewport.changed) {
             gp.src_clip_x = bitmap.viewport.x;
@@ -337,14 +327,6 @@ int main()
                 bitmap.data = (uint8 *)gp.pixels;
             bitmap.viewport.changed = 0;
         }
-
-#if 0
-        uint16_t *fb = gp.pixels + bitmap.viewport.x + bitmap.viewport.y * BMWIDTH;
-        for (i = 0; i < 32; i++) {
-            memset(fb + bitmap.width * 24 + i * 6, (keys.key2 & (1 << i)) ? 0xff : 0, 12);
-            memset(fb + bitmap.width * 25 + i * 6, (nkeys.key2 & (1 << i)) ? 0x0f : 0, 12);
-        }
-#endif
 
         if (show_timing) {
             render_text_ex((uint16_t *)bitmap.data, bitmap.pitch / 2, fps, bitmap.viewport.x, bitmap.viewport.y);
@@ -369,33 +351,46 @@ int main()
                 bar_right += pitch;
             }
         }
+#if 0
+        uint16_t *fb = gp.pixels + bitmap.viewport.x + bitmap.viewport.y * BMWIDTH;
+        for (i = 0; i < 32; i++) {
+            memset(fb + bitmap.width * 24 + i * 6, (keys.key2 & (1 << i)) ? 0xff : 0, 12);
+            memset(fb + bitmap.width * 25 + i * 6, (nkeys.key2 & (1 << i)) ? 0x0f : 0, 12);
+        }
+#endif
         if (emuIfGraphShow() < 0)
             return 0;
 
-        uint32_t now = NativeGE_getTime();
-        avg = ((avg * (32 - frameskip - 1)) + (now - last_frame)) / 32.0;
+        total_time += libgame_utime() - start_time;
+        update_sound();
+
+        int last_frameskip = frameskip;
+        frameskip = 0;
+
+        while (frameskip < last_frameskip - 1 ||
+               (total_time / (frameskip + 1) > (snd.enabled ? 16500 : 18000) &&
+                frameskip < last_frameskip + 2 && frameskip < MAX_FRAMESKIP)) {
+            start_time = libgame_utime();
+            system_frame(1);
+            /* At high frameskips we have to update the input once in a while,
+               or the game will become unresponsive and key presses may be
+               lost. */
+            if ((frameskip & 3) == 3)
+                update_input();
+            frameskip++;
+            total_time += libgame_utime() - start_time;
+            update_sound();
+        }
 
         if (show_timing)
 #ifdef SHOW_KEYS
-            sprintf(fps, "%dms %d k%d/%d", (int)avg, frameskip, keys.key2, nkeys.key2);
+            sprintf(fps, "%dms %d k%d/%d", (int)(total_time / (frameskip + 1)), frameskip, keys.key2, nkeys.key2);
 #else
             sprintf(fps, "%dms %d", (int)avg, frameskip);
 #endif
-
-        if (countdown)
-            countdown--;
-        if (!countdown && frameskip < MAX_FRAMESKIP && avg > 16.2) {
-            frameskip++;
-            countdown = 10;
-        }
-        else if (!countdown && frameskip > 0 && avg < 15.5) {
-            frameskip--;
-            countdown = 10;
-        }
-
-        last_frame = NativeGE_getTime();
     }
 
     free_fonts();
     return 0;
 }
+
