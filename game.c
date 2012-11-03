@@ -220,6 +220,7 @@ int main()
     fs_fprintf(fd, "Width %d, Height %d\n", gDisplayDev->getWidth(), gDisplayDev->getHeight());
     fs_fprintf(fd, "LCD format %08x\n", gDisplayDev->getBuffFormat());
     fs_fprintf(fd, "ARM frequency %d\n", GetArmCoreFreq());
+    fs_fprintf(fd, "system ID %d\n", libgame_system_id);
 
     sp.rate = 22050;
     sp.channels = 1;            // 2;
