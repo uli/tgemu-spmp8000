@@ -37,8 +37,6 @@ extern int h6280_speed;
 #define H6280_IRQ1_VEC	0xfff8
 #define H6280_IRQ2_VEC	0xfff6			/* Aka BRK vector */
 
-extern int h6280_ICount;				/* cycle count */
-
 extern void h6280_reset(void);			/* Reset registers to the initial values */
 extern void h6280_exit(void);					/* Shut down CPU */
 extern int h6280_execute(int cycles);			/* Execute cycles - returns number of cycles actually run */
@@ -52,6 +50,7 @@ extern unsigned h6280_get_reg (int regnum);
 extern void h6280_set_reg (int regnum, unsigned val);
 extern void h6280_set_nmi_line(int state);
 extern void h6280_set_irq_line(int irqline, int state);
+extern void h6280_set_irq_line_int(int irqline, int state);
 extern void h6280_set_irq_callback(int (*callback)(int irqline));
 
 int H6280_irq_status_r(int offset);

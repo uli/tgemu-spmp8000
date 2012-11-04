@@ -75,7 +75,7 @@ int vdc_r(int offset)
         case 0x0000: /* Register latch / status flags */
             temp = status;
             status = 0;
-            h6280_set_irq_line(0, CLEAR_LINE);
+            h6280_set_irq_line_int(0, CLEAR_LINE);
             return (temp);
 
         case 0x0002: /* Data port (LSB) */
@@ -262,7 +262,7 @@ void vdc_do_dma(void)
     /* Cause IRQ1 if enabled */
     if(dvc)
     {
-        h6280_set_irq_line(0, ASSERT_LINE);
+        h6280_set_irq_line_int(0, ASSERT_LINE);
     }
 }
 

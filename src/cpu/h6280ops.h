@@ -22,10 +22,10 @@
 #define _fN 0x80
 
 /* some shortcuts for improved readability */
-#define A	h6280.a
-#define X	h6280.x
-#define Y	h6280.y
-#define P	h6280.p
+#define A	reg_a.aex
+#define X	reg_x.xex
+#define Y	reg_y.yex
+#define P	reg_p.pex
 #define S	h6280.sp.b.l
 
 #if LAZY_FLAGS
@@ -44,20 +44,20 @@
 
 #endif
 
-#define EAL h6280.ea.b.l
-#define EAH h6280.ea.b.h
-#define EAW h6280.ea.w.l
-#define EAD h6280.ea.d
+#define EAL reg_ea.b.l
+#define EAH reg_ea.b.h
+#define EAW reg_ea.w.l
+#define EAD reg_ea.d
 
 #define ZPL h6280.zp.b.l
 #define ZPH h6280.zp.b.h
 #define ZPW h6280.zp.w.l
 #define ZPD h6280.zp.d
 
-#define PCL h6280.pc.b.l
-#define PCH h6280.pc.b.h
-#define PCW h6280.pc.w.l
-#define PCD h6280.pc.d
+#define PCL reg_pc.b.l
+#define PCH reg_pc.b.h
+#define PCW reg_pc.w.l
+#define PCD reg_pc.d
 
 #define DO_INTERRUPT(vector)									\
 {																\
@@ -78,14 +78,18 @@
 			 !(h6280.irq_mask & 0x2) )							\
 		{														\
 			DO_INTERRUPT(H6280_IRQ1_VEC);						\
+			/* h6280.pc.d = reg_pc.d; */\
 			(*h6280.irq_callback)(0);							\
+			/* reg_pc.d = h6280.pc.d; */\
 		}														\
 		else													\
 		if ( h6280.irq_state[1] != CLEAR_LINE &&				\
 			 !(h6280.irq_mask & 0x1) )							\
 		{														\
 			DO_INTERRUPT(H6280_IRQ2_VEC);						\
+			/* h6280.pc.d = reg_pc.d; */ \
 			(*h6280.irq_callback)(1);							\
+			/* reg_pc.d = h6280.pc.d; */ \
         }                                                       \
 		else													\
         if ( h6280.irq_state[2] != CLEAR_LINE &&                \
@@ -215,13 +219,13 @@ extern int io_page_r(int address);
 	{															\
 		h6280_ICount -= 4;										\
 		tmp = RDOPARG();										\
-		PCW++;													\
-		EAW = PCW + (signed char)tmp;							\
+		PCD++;													\
+		EAD = PCD + (signed char)tmp;							\
 		PCD = EAD;												\
 	}															\
 	else														\
 	{															\
-		PCW++;													\
+		PCD++;													\
 		h6280_ICount -= 2;										\
 	}
 
@@ -236,7 +240,7 @@ extern int io_page_r(int address);
  ***************************************************************/
 #define EA_ZPG													\
 	ZPL = RDOPARG();											\
-	PCW++;														\
+	PCD++;														\
 	EAD = ZPD
 
 /***************************************************************
@@ -244,7 +248,7 @@ extern int io_page_r(int address);
  ***************************************************************/
 #define EA_ZPX													\
 	ZPL = RDOPARG() + X;										\
-	PCW++;														\
+	PCD++;														\
 	EAD = ZPD
 
 /***************************************************************
@@ -252,7 +256,7 @@ extern int io_page_r(int address);
  ***************************************************************/
 #define EA_ZPY													\
 	ZPL = RDOPARG() + Y;										\
-	PCW++;														\
+	PCD++;														\
 	EAD = ZPD
 
 /***************************************************************
@@ -260,30 +264,30 @@ extern int io_page_r(int address);
  ***************************************************************/
 #define EA_ABS													\
 	EAL = RDOPARG();											\
-	PCW++;														\
+	PCD++;														\
 	EAH = RDOPARG();											\
-	PCW++
+	PCD++
 
 /***************************************************************
  *  EA = absolute address + X
  ***************************************************************/
 #define EA_ABX                                                  \
 	EA_ABS; 													\
-	EAW += X
+	EAD += X
 
 /***************************************************************
  *	EA = absolute address + Y
  ***************************************************************/
 #define EA_ABY													\
 	EA_ABS; 													\
-	EAW += Y
+	EAD += Y
 
 /***************************************************************
  *	EA = zero page indirect (65c02 pre indexed w/o X)
  ***************************************************************/
 #define EA_ZPI													\
 	ZPL = RDOPARG();											\
-	PCW++;														\
+	PCD++;														\
 	EAD = RDZPWORD(ZPD)
 
 /***************************************************************
@@ -291,7 +295,7 @@ extern int io_page_r(int address);
  ***************************************************************/
 #define EA_IDX													\
 	ZPL = RDOPARG() + X;										\
-	PCW++;														\
+	PCD++;														\
 	EAD = RDZPWORD(ZPD);
 
 /***************************************************************
@@ -299,9 +303,9 @@ extern int io_page_r(int address);
  ***************************************************************/
 #define EA_IDY													\
 	ZPL = RDOPARG();											\
-	PCW++;														\
+	PCD++;														\
 	EAD = RDZPWORD(ZPD);										\
-	EAW += Y
+	EAD += Y
 
 /***************************************************************
  *	EA = indirect (only used by JMP)
@@ -325,8 +329,8 @@ extern int io_page_r(int address);
 	EAL = tmp
 
 /* read a value into tmp */
-#define RD_IMM	tmp = RDOPARG(); PCW++
-#define RD_IMM2	tmp2 = RDOPARG(); PCW++
+#define RD_IMM	tmp = RDOPARG(); PCD++
+#define RD_IMM2	tmp2 = RDOPARG(); PCD++
 #define RD_ACC	tmp = A
 #define RD_ZPG	EA_ZPG; tmp = RDMEMZ(EAD)
 #define RD_ZPX	EA_ZPX; tmp = RDMEMZ(EAD)
@@ -504,7 +508,7 @@ extern int io_page_r(int address);
  *	set I flag, reset D flag and jump via IRQ vector
  ***************************************************************/
 #define BRK 													\
-	PCW++;														\
+	PCD++;														\
 	PUSH(PCH);													\
 	PUSH(PCL);													\
 	PUSH(P | _fB);												\
@@ -687,7 +691,7 @@ extern int io_page_r(int address);
  *	PC to the effective address
  ***************************************************************/
 #define JSR 													\
-	PCW--;														\
+	PCD--;														\
 	PUSH(PCH);													\
 	PUSH(PCL);													\
 	PCD = EAD
@@ -851,7 +855,7 @@ extern int io_page_r(int address);
 #define RTS 													\
 	PULL(PCL);													\
 	PULL(PCH);													\
-	PCW++;														\
+	PCD++;														\
 
 /* 6280 ********************************************************
  *  SAX Swap accumulator and index X
@@ -947,9 +951,9 @@ extern int io_page_r(int address);
     if((op & 0x9F) == 0x09)                                     \
     {                                                           \
         UINT8 acc;                                              \
-        PCW++;                                                  \
+        PCD++;                                                  \
         tmp = RDOPARG(); /* Immediate operand */                \
-        PCW++;                                                  \
+        PCD++;                                                  \
         acc = RDMEMZ(X); /* Used instead of accmulator */       \
                                                                 \
         switch(op)                                              \
@@ -1081,7 +1085,7 @@ extern void vdc_w(int address, int data);
 	from=RDMEMW(PCW);											\
 	to  =RDMEMW(PCW+2);											\
 	length=RDMEMW(PCW+4);										\
-	PCW+=6; 													\
+	PCD+=6; 													\
 	alternate=0; 												\
 	while ((length--) != 0) { 									\
 		WRMEM(to,RDMEM(from+alternate)); 						\
@@ -1146,7 +1150,7 @@ extern void bank_set(int bank, int value);
 	from=RDMEMW(PCW);											\
 	to  =RDMEMW(PCW+2);											\
 	length=RDMEMW(PCW+4);										\
-	PCW+=6; 													\
+	PCD+=6; 													\
 	while ((length--) != 0) { 									\
 		WRMEM(to,RDMEM(from)); 									\
 		to--; 													\
@@ -1161,7 +1165,7 @@ extern void bank_set(int bank, int value);
 	from=RDMEMW(PCW);											\
 	to  =RDMEMW(PCW+2);											\
 	length=RDMEMW(PCW+4);										\
-	PCW+=6; 													\
+	PCD+=6; 													\
 	alternate=0; 												\
 	while ((length--) != 0) { 									\
 		WRMEM(to+alternate,RDMEM(from));						\
@@ -1177,7 +1181,7 @@ extern void bank_set(int bank, int value);
 	from=RDMEMW(PCW);											\
 	to  =RDMEMW(PCW+2);											\
 	length=RDMEMW(PCW+4);										\
-	PCW+=6; 													\
+	PCD+=6; 													\
 	while ((length--) != 0) { 									\
 		WRMEM(to,RDMEM(from)); 									\
 		to++; 													\
@@ -1192,7 +1196,7 @@ extern void bank_set(int bank, int value);
 	from=RDMEMW(PCW);											\
 	to  =RDMEMW(PCW+2);											\
 	length=RDMEMW(PCW+4);										\
-	PCW+=6; 													\
+	PCD+=6; 													\
 	while ((length--) != 0) { 									\
 		WRMEM(to,RDMEM(from)); 									\
 		from++;													\

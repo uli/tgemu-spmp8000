@@ -64,6 +64,49 @@
 
 ******************************************************************************/
 
+#include "osd_cpu.h"
+register PAIR reg_pc asm("r7");
+register PAIR reg_ea asm("r8");
+register int h6280_ICount asm("r9");	/* cycle count */
+register union { UINT8 p; UINT32 pex; } reg_p asm("r10");
+register union { UINT8 a; UINT32 aex; } reg_a asm("r11");
+register union { UINT8 x; UINT32 xex; } reg_x asm("r5");
+register union { UINT8 y; UINT32 yex; } reg_y asm("r6");
+
+#define SAVE_REGS \
+	PAIR save_pc = reg_pc; \
+	PAIR save_ea = reg_ea; \
+	int save_ICount = h6280_ICount; \
+	UINT32 save_p = reg_p.pex; \
+	UINT32 save_a = reg_a.aex; \
+	UINT32 save_x = reg_x.xex; \
+	UINT32 save_y = reg_y.yex; \
+
+#define RESTORE_REGS \
+	reg_pc = save_pc; \
+	reg_ea = save_ea; \
+	h6280_ICount = save_ICount; \
+	reg_p.pex = save_p; \
+	reg_a.aex = save_a; \
+	reg_x.xex = save_x; \
+	reg_y.yex = save_y; \
+
+#define LOAD_REGS \
+	reg_pc = h6280.pc; \
+	reg_ea = h6280.ea; \
+	reg_p.pex = h6280.p; \
+	reg_a.aex = h6280.a; \
+	reg_x.xex = h6280.x; \
+	reg_y.yex = h6280.y; \
+
+#define STORE_REGS \
+	h6280.pc = reg_pc; \
+	h6280.ea = reg_ea; \
+	h6280.p = reg_p.p; \
+	h6280.a = reg_a.a; \
+	h6280.x = reg_x.x; \
+	h6280.y = reg_y.y; \
+
 #include "cpuintrf.h"
 #include "h6280.h"
 #include <stdio.h>
@@ -71,7 +114,6 @@
 
 /* Default state of HuC6280 clock (1=7.16MHz, 0=3.58MHz) */
 int h6280_speed = 1;
-int h6280_ICount = 0;
 static  h6280_Regs  h6280;
 
 #include "h6280ops.h"
@@ -79,8 +121,10 @@ static  h6280_Regs  h6280;
 
 /*****************************************************************************/
 
+/* EXTERNAL CALL */
 void h6280_reset(void)
 {
+	SAVE_REGS
 	int i;
 
 	/* wipe out the h6280 structure */
@@ -95,6 +139,7 @@ void h6280_reset(void)
     /* read the reset vector into PC */
 	PCL = RDMEM(H6280_RESET_VEC);
 	PCH = RDMEM((H6280_RESET_VEC+1));
+	h6280.pc.d = reg_pc.d;
 
 	/* timer off by default */
 	h6280.timer_status=0;
@@ -105,6 +150,7 @@ void h6280_reset(void)
 		h6280.irq_state[i] = CLEAR_LINE;
 
     h6280_speed = 1; /* default = 7.16MHz (?) */
+    RESTORE_REGS
 }
 
 void h6280_exit(void)
@@ -112,8 +158,11 @@ void h6280_exit(void)
 	/* nothing */
 }
 
+/* EXTERNAL CALL */
 int h6280_execute(int cycles)
 {
+	SAVE_REGS
+	LOAD_REGS
 	int in,lastcycle,deltacycle;
 	h6280_ICount = cycles;
 
@@ -127,15 +176,17 @@ int h6280_execute(int cycles)
     {
 		int i;
 		for (i = 0; i < 8; i++) {
+			//char buf[80];
 			/* Speed hack: executing several insns at a time speeds things
 			   up considerably. No (additional) incompatibilities
 			   have been observed in casual testing. */
-			h6280.ppc = h6280.pc;
+			h6280.ppc.d = reg_pc.d;
 
 			/* Execute 1 instruction */
 			in=RDOP();
 			PCW++;
 			insnh6280[in]();
+			//write(dfd, buf, sprintf(buf, "in %02X PC %04X -> %04X\n", in, h6280.ppc.d, reg_pc.d));
 		}
 		
 		/* Check internal timer */
@@ -146,16 +197,18 @@ int h6280_execute(int cycles)
 			if(h6280.timer_value<=0 && h6280.timer_ack==1)
 			{
 				h6280.timer_ack=h6280.timer_status=0;
-				h6280_set_irq_line(2,ASSERT_LINE);
+				h6280_set_irq_line_int(2,ASSERT_LINE);
 			}
 		}
 		lastcycle = h6280_ICount;
 
 		/* If PC has not changed we are stuck in a tight loop, may as well finish */
-		if( h6280.pc.d == h6280.ppc.d )
+		if( reg_pc.d == h6280.ppc.d )
 		{
 			if (h6280_ICount > 0) h6280_ICount=0;
 			h6280.extra_cycles = 0;
+			STORE_REGS
+			RESTORE_REGS
 			return cycles;
 		}
 
@@ -165,7 +218,10 @@ int h6280_execute(int cycles)
     h6280_ICount -= h6280.extra_cycles;
     h6280.extra_cycles = 0;
 
-    return cycles - h6280_ICount;
+    int ret = cycles - h6280_ICount;
+    STORE_REGS
+    RESTORE_REGS
+    return ret;
 }
 
 unsigned h6280_get_context (void *dst)
@@ -181,9 +237,10 @@ void h6280_set_context (void *src)
 		h6280 = *(h6280_Regs*)src;
 }
 
+/* EXTERNAL CALL */
 unsigned h6280_get_pc (void)
 {
-    return PCD;
+    return h6280.pc.d;
 }
 
 void h6280_set_pc (unsigned val)
@@ -270,7 +327,23 @@ void h6280_set_nmi_line(int state)
 	}
 }
 
+/* EXTERNAL CALL */
 void h6280_set_irq_line(int irqline, int state)
+{
+    SAVE_REGS
+    LOAD_REGS
+    h6280.irq_state[irqline] = state;
+
+	/* If line is cleared, just exit */
+	if (state == CLEAR_LINE) return;
+
+	/* Check if interrupts are enabled and the IRQ mask is clear */
+	CHECK_IRQ_LINES;
+    STORE_REGS
+    RESTORE_REGS
+}
+/* to be called from the CPU emulation context */
+void h6280_set_irq_line_int(int irqline, int state)
 {
     h6280.irq_state[irqline] = state;
 
@@ -281,6 +354,7 @@ void h6280_set_irq_line(int irqline, int state)
 	CHECK_IRQ_LINES;
 }
 
+/* EXTERNAL CALL */
 void h6280_set_irq_callback(int (*callback)(int irqline))
 {
 	h6280.irq_callback = callback;
@@ -306,8 +380,11 @@ int H6280_irq_status_r (int offset)
 	return 0;
 }
 
+/* EXTERNAL CALL */
 void H6280_irq_status_w (int offset, int data)
 {
+	SAVE_REGS
+	LOAD_REGS
 	switch (offset)
 	{
 		case 0: /* Write irq mask */
@@ -320,6 +397,8 @@ void H6280_irq_status_w (int offset, int data)
 			h6280.timer_ack=1; /* Timer can't refire until ack'd */
 			break;
 	}
+	STORE_REGS
+	RESTORE_REGS
 }
 
 int H6280_timer_r (int offset)
