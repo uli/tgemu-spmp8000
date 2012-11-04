@@ -303,8 +303,10 @@ int main()
             break;
     }
     
+    uint32_t avg_full = 16666;
+    uint32_t avg_skip = 16666;
+    
     while (1) {
-        uint32_t total_time = 0;
         uint32_t start_time = libgame_utime();
         update_input();
 
@@ -359,30 +361,28 @@ int main()
         if (emuIfGraphShow() < 0)
             return 0;
 
-        total_time += libgame_utime() - start_time;
+        avg_full = (avg_full * 7 + libgame_utime() - start_time) / 8;
         update_sound();
 
-        int last_frameskip = frameskip;
-        frameskip = 0;
-
-        while (frameskip < last_frameskip - 1 ||
-               (total_time / (frameskip + 1) > (snd.enabled ? 16500 : 18000) &&
-                frameskip < last_frameskip + 2 && frameskip < MAX_FRAMESKIP)) {
+        int i;
+        for (i = 0; i < frameskip; i++) {
             start_time = libgame_utime();
             system_frame(1);
-            /* At high frameskips we have to update the input once in a while,
-               or the game will become unresponsive and key presses may be
-               lost. */
-            if ((frameskip & 3) == 3)
-                update_input();
-            frameskip++;
-            total_time += libgame_utime() - start_time;
+            /* skipping input is not a good idea, makes the game less
+               less responsive */
+            update_input();
+            avg_skip = (avg_skip * 15 + libgame_utime() - start_time) / 16;
             update_sound();
         }
 
+        if (avg_full + frameskip * avg_skip > 16666 * (frameskip + 1))
+            frameskip++;
+        else if (avg_full + frameskip * avg_skip < 16666 * (frameskip + 1) - avg_skip)
+            frameskip--;
+
         if (show_timing)
 #ifdef SHOW_KEYS
-            sprintf(fps, "%dms %d k%d/%d", (int)(total_time / (frameskip + 1)), frameskip, keys.key2, nkeys.key2);
+            sprintf(fps, "%d/%dms %d k%d/%d", avg_full, avg_skip, frameskip, keys.key2, nkeys.key2);
 #else
             sprintf(fps, "%dms %d", (int)avg, frameskip);
 #endif
