@@ -63,6 +63,13 @@ int widescreen_key = 0;
 int fps_key = 0;
 int select_key = 0;
 int sound_key = 0;
+int up_key = 0;
+int down_key = 0;
+int left_key = 0;
+int right_key = 0;
+int b1_key = 0;
+int b2_key = 0;
+
 /* The "start" key triggers GE_KEY_START on the A1000, but on the
    JXD100, it's the "square" key.  Not a dealbreaker, but we should
    support the real start key as well.  */
@@ -72,6 +79,7 @@ key_data_t keys, nkeys;
 
 void update_input(void)
 {
+    static int official_countdown = 20;
     static int show_timing_triggered = 0;
     static int widescreen_triggered = 0;
     static int sound_triggered = 0;
@@ -79,27 +87,48 @@ void update_input(void)
     input.pad[0] = 0;
     /* Do this even when using native input because it won't be possible
        to quit otherwise. */
-    NativeGE_getKeyInput4Ntv(&keys);
-    if (keys.key2 & GE_KEY_UP)
-        input.pad[0] |= INPUT_UP;
-    if (keys.key2 & GE_KEY_DOWN)
-        input.pad[0] |= INPUT_DOWN;
-    if (keys.key2 & GE_KEY_LEFT)
-        input.pad[0] |= INPUT_LEFT;
-    if (keys.key2 & GE_KEY_RIGHT)
-        input.pad[0] |= INPUT_RIGHT;
-    if (keys.key2 & GE_KEY_X)
-        input.pad[0] |= INPUT_B2;
-    if (keys.key2 & GE_KEY_O)
-        input.pad[0] |= INPUT_B1;
-    if (keys.key2 & GE_KEY_START)
-        input.pad[0] |= INPUT_RUN;
+    if (!NativeGE_getKeyInput || !official_countdown) {
+        NativeGE_getKeyInput4Ntv(&keys);
+        official_countdown = 20;
+    }
+    official_countdown--;
+
+    if (!NativeGE_getKeyInput) {
+        if (keys.key2 & GE_KEY_UP)
+            input.pad[0] |= INPUT_UP;
+        if (keys.key2 & GE_KEY_DOWN)
+            input.pad[0] |= INPUT_DOWN;
+        if (keys.key2 & GE_KEY_LEFT)
+            input.pad[0] |= INPUT_LEFT;
+        if (keys.key2 & GE_KEY_RIGHT)
+            input.pad[0] |= INPUT_RIGHT;
+        if (keys.key2 & GE_KEY_X)
+            input.pad[0] |= INPUT_B2;
+        if (keys.key2 & GE_KEY_O)
+            input.pad[0] |= INPUT_B1;
+        if (keys.key2 & GE_KEY_START)
+            input.pad[0] |= INPUT_RUN;
+    }
     
     /* These are all the keys we can use through the 4Ntv interface.
        To get access to the rest, we have to use the device-specific
        interface, if available. */
     if (NativeGE_getKeyInput) {
         NativeGE_getKeyInput(&nkeys);
+        if (nkeys.key2 & up_key)
+            input.pad[0] |= INPUT_UP;
+        if (nkeys.key2 & down_key)
+            input.pad[0] |= INPUT_DOWN;
+        if (nkeys.key2 & left_key)
+            input.pad[0] |= INPUT_LEFT;
+        if (nkeys.key2 & right_key)
+            input.pad[0] |= INPUT_RIGHT;
+        if (nkeys.key2 & b2_key)
+            input.pad[0] |= INPUT_B2;
+        if (nkeys.key2 & b1_key)
+            input.pad[0] |= INPUT_B1;
+        if (nkeys.key2 & start_key)
+            input.pad[0] |= INPUT_RUN;
         if (nkeys.key2 & fps_key) {
             if (!show_timing_triggered) {
                 show_timing_triggered = 1;
@@ -292,12 +321,25 @@ int main()
             fps_key = RAW_A1000_KEY_R;
             select_key = RAW_A1000_KEY_SELECT;
             sound_key = RAW_A1000_KEY_TRIANGLE;
+            up_key = RAW_A1000_KEY_UP;
+            down_key = RAW_A1000_KEY_DOWN;
+            left_key = RAW_A1000_KEY_LEFT;
+            right_key = RAW_A1000_KEY_RIGHT;
+            b1_key = RAW_A1000_KEY_O;
+            b2_key = RAW_A1000_KEY_X;
+            start_key = RAW_A1000_KEY_START;
             break;
         case SYS_JXD_100:
             select_key = RAW_JXD100_KEY_SELECT;
             fps_key = RAW_JXD100_KEY_POWER;
-            start_key = RAW_JXD100_KEY_START;
             sound_key = RAW_JXD100_KEY_TRIANGLE;
+            up_key = RAW_JXD100_KEY_UP;
+            down_key = RAW_JXD100_KEY_DOWN;
+            left_key = RAW_JXD100_KEY_LEFT;
+            right_key = RAW_JXD100_KEY_RIGHT;
+            b1_key = RAW_JXD100_KEY_O;
+            b2_key = RAW_JXD100_KEY_X;
+            start_key = RAW_JXD100_KEY_START;
             break;
         default:
             break;
@@ -368,8 +410,12 @@ int main()
         for (i = 0; i < frameskip; i++) {
             start_time = libgame_utime();
             system_frame(1);
-            /* skipping input is not a good idea, makes the game less
-               less responsive */
+            /* Skipping input is not a good idea, makes the game less
+               less responsive. The A1000 gets _very_ slow when
+               you call NativeGE_getKeyInput4Ntv() too often. We try
+               to avoid using it. */
+            /* XXX: Reduce update frequency if native input is not
+               available. */
             update_input();
             avg_skip = (avg_skip * 15 + libgame_utime() - start_time) / 16;
             update_sound();
