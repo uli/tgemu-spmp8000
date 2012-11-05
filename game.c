@@ -190,6 +190,11 @@ void init_profile(void);
 void dump_profile(void);
 #endif
 
+/* Dummy function used in place of gDisplayDev->flip(). */
+void dummy_fun(void)
+{
+}
+
 int main()
 {
     /* Turn off OS debug output. It is enabled by default on some systems
@@ -316,6 +321,10 @@ int main()
     int avg_full = 16666;
     int avg_skip = 16666;
     
+    /* Disable v-sync, we don't have that much time to waste. */
+    gDisplayDev->lcdFlip = dummy_fun;
+    gDisplayDev->getShadowBuffer = gDisplayDev->getFrameBuffer;
+
     while (1) {
         uint32_t start_time = libgame_utime();
         update_input();
