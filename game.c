@@ -63,126 +63,96 @@ int widescreen_key = 0;
 int fps_key = 0;
 int select_key = 0;
 int sound_key = 0;
-int up_key = 0;
-int down_key = 0;
-int left_key = 0;
-int right_key = 0;
-int b1_key = 0;
-int b2_key = 0;
 
 /* The "start" key triggers GE_KEY_START on the A1000, but on the
    JXD100, it's the "square" key.  Not a dealbreaker, but we should
    support the real start key as well.  */
 int start_key = 0;
 
-key_data_t keys, nkeys;
+key_data_t keys;
+uint32_t nkeys;
+keymap_t keymap;
 
 void update_input(void)
 {
-    static int official_countdown = 20;
     static int show_timing_triggered = 0;
     static int widescreen_triggered = 0;
     static int sound_triggered = 0;
 
     input.pad[0] = 0;
-    /* Do this even when using native input because it won't be possible
-       to quit otherwise. */
-    if (!NativeGE_getKeyInput || !official_countdown) {
-        NativeGE_getKeyInput4Ntv(&keys);
-        official_countdown = 20;
-    }
-    official_countdown--;
 
-    if (!NativeGE_getKeyInput) {
-        if (keys.key2 & GE_KEY_UP)
-            input.pad[0] |= INPUT_UP;
-        if (keys.key2 & GE_KEY_DOWN)
-            input.pad[0] |= INPUT_DOWN;
-        if (keys.key2 & GE_KEY_LEFT)
-            input.pad[0] |= INPUT_LEFT;
-        if (keys.key2 & GE_KEY_RIGHT)
-            input.pad[0] |= INPUT_RIGHT;
-        if (keys.key2 & GE_KEY_X)
-            input.pad[0] |= INPUT_B2;
-        if (keys.key2 & GE_KEY_O)
-            input.pad[0] |= INPUT_B1;
-        if (keys.key2 & GE_KEY_START)
-            input.pad[0] |= INPUT_RUN;
-    }
-    
+    NativeGE_getKeyInput4Ntv(&keys);
+    if (keys.key2 & GE_KEY_UP)
+        input.pad[0] |= INPUT_UP;
+    if (keys.key2 & GE_KEY_DOWN)
+        input.pad[0] |= INPUT_DOWN;
+    if (keys.key2 & GE_KEY_LEFT)
+        input.pad[0] |= INPUT_LEFT;
+    if (keys.key2 & GE_KEY_RIGHT)
+        input.pad[0] |= INPUT_RIGHT;
+    if (keys.key2 & GE_KEY_X)
+        input.pad[0] |= INPUT_B2;
+    if (keys.key2 & GE_KEY_O)
+        input.pad[0] |= INPUT_B1;
+    if (keys.key2 & GE_KEY_START)
+        input.pad[0] |= INPUT_RUN;
     /* These are all the keys we can use through the 4Ntv interface.
-       To get access to the rest, we have to use the device-specific
-       interface, if available. */
-    if (NativeGE_getKeyInput) {
-        NativeGE_getKeyInput(&nkeys);
-        if (nkeys.key2 & up_key)
-            input.pad[0] |= INPUT_UP;
-        if (nkeys.key2 & down_key)
-            input.pad[0] |= INPUT_DOWN;
-        if (nkeys.key2 & left_key)
-            input.pad[0] |= INPUT_LEFT;
-        if (nkeys.key2 & right_key)
-            input.pad[0] |= INPUT_RIGHT;
-        if (nkeys.key2 & b2_key)
-            input.pad[0] |= INPUT_B2;
-        if (nkeys.key2 & b1_key)
-            input.pad[0] |= INPUT_B1;
-        if (nkeys.key2 & start_key)
-            input.pad[0] |= INPUT_RUN;
-        if (nkeys.key2 & fps_key) {
-            if (!show_timing_triggered) {
-                show_timing_triggered = 1;
-                show_timing = !show_timing;
-            }
+       To get access to the rest, we use the emulator interface. */
+
+    nkeys = emuIfKeyGetInput(&keymap);
+    if (nkeys & fps_key) {
+        if (!show_timing_triggered) {
+            show_timing_triggered = 1;
+            show_timing = !show_timing;
         }
-        else {
-            show_timing_triggered = 0;
-        }
-        if (nkeys.key2 & widescreen_key) {
-            if (!widescreen_triggered) {
-                widescreen_triggered = 1;
-                widescreen = !widescreen;
-                /* Widescreen mode is the "normal" mode of rendering the
-                   screen in which the visible graphics are blitted as
-                   they are to the full size of the screen. To achieve a
-                   pillarboxed rendering in the original aspect ratio we
-                   make the source bitmap wider, have the emulator render
-                   into the middle of this bitmap, and then blit the
-                   entire bitmap to the screen. */
-                if (widescreen) {
-                    bitmap.pitch = (bitmap.width * bitmap.granularity);
-                    bitmap.data = (uint8 *)gp.pixels;
-                    gp.width = BMWIDTH;
-                    gp.src_clip_w = bitmap.viewport.w;
-                }
-                else {
-                    /* use 1/4 wider bitmap for emulator rendering */
-                    bitmap.pitch = ((bitmap.width + VISIBLEWIDTH / 4) * bitmap.granularity);
-                    /* render with an offset of 1/8 screen size to the right */
-                    bitmap.data = (uint8 *)(gp.pixels + bitmap.viewport.w / 8);
-                    /* blit 1/4 wider bitmap */
-                    gp.width = BMWIDTH + VISIBLEWIDTH / 4;
-                    gp.src_clip_w = bitmap.viewport.w + bitmap.viewport.w / 4;
-                }
-                emuIfGraphChgView(&gp);
-            }
-        }
-        else {
-            widescreen_triggered = 0;
-        }
-        if (nkeys.key2 & select_key)
-            input.pad[0] |= INPUT_SELECT;
-        if (nkeys.key2 & start_key)
-            input.pad[0] |= INPUT_RUN;
-        if (nkeys.key2 & sound_key) {
-            if (!sound_triggered) {
-                snd.enabled = !snd.enabled;
-                sound_triggered = 1;
-            }
-        }
-        else
-            sound_triggered = 0;
     }
+    else {
+        show_timing_triggered = 0;
+    }
+    if (nkeys & widescreen_key) {
+        if (!widescreen_triggered) {
+            widescreen_triggered = 1;
+            widescreen = !widescreen;
+            /* Widescreen mode is the "normal" mode of rendering the
+               screen in which the visible graphics are blitted as
+               they are to the full size of the screen. To achieve a
+               pillarboxed rendering in the original aspect ratio we
+               make the source bitmap wider, have the emulator render
+               into the middle of this bitmap, and then blit the
+               entire bitmap to the screen. */
+            if (widescreen) {
+                bitmap.pitch = (bitmap.width * bitmap.granularity);
+                bitmap.data = (uint8 *)gp.pixels;
+                gp.width = BMWIDTH;
+                gp.src_clip_w = bitmap.viewport.w;
+            }
+            else {
+                /* use 1/4 wider bitmap for emulator rendering */
+                bitmap.pitch = ((bitmap.width + VISIBLEWIDTH / 4) * bitmap.granularity);
+                /* render with an offset of 1/8 screen size to the right */
+                bitmap.data = (uint8 *)(gp.pixels + bitmap.viewport.w / 8);
+                /* blit 1/4 wider bitmap */
+                gp.width = BMWIDTH + VISIBLEWIDTH / 4;
+                gp.src_clip_w = bitmap.viewport.w + bitmap.viewport.w / 4;
+            }
+            emuIfGraphChgView(&gp);
+        }
+    }
+    else {
+        widescreen_triggered = 0;
+    }
+    if (nkeys & select_key)
+        input.pad[0] |= INPUT_SELECT;
+    if (nkeys & start_key)
+        input.pad[0] |= INPUT_RUN;
+    if (nkeys & sound_key) {
+        if (!sound_triggered) {
+            snd.enabled = !snd.enabled;
+            sound_triggered = 1;
+        }
+    }
+    else
+        sound_triggered = 0;
 }
 
 key_data_t wait_for_key(void)
@@ -222,6 +192,10 @@ void dump_profile(void);
 
 int main()
 {
+    /* Turn off OS debug output. It is enabled by default on some systems
+       and causes horrible slowdowns .*/
+    *g_onoff_p = 0;
+
     int fd, res;
 
 #ifdef PROFILE
@@ -255,7 +229,14 @@ int main()
     sp.channels = 1;            // 2;
     sp.depth = 0;
     sp.callback = 0;
-    fs_fprintf(fd, "emuIfSoundInit returns %d, sp.rate %d\n", emuIfSoundInit(&sp), sp.rate);
+    res = emuIfSoundInit(&sp);
+    fs_fprintf(fd, "emuIfSoundInit returns %d, sp.rate %d\n", res, sp.rate);
+
+    if (emuIfKeyInit(&keymap) < 0) {
+        fs_fprintf(fd, "emuIfKeyInit() failed\n");
+        NativeGE_fsClose(fd);
+        return 0;
+    }
 
     res = load_fonts();
     if (res < 0) {
@@ -321,24 +302,11 @@ int main()
             fps_key = RAW_A1000_KEY_R;
             select_key = RAW_A1000_KEY_SELECT;
             sound_key = RAW_A1000_KEY_TRIANGLE;
-            up_key = RAW_A1000_KEY_UP;
-            down_key = RAW_A1000_KEY_DOWN;
-            left_key = RAW_A1000_KEY_LEFT;
-            right_key = RAW_A1000_KEY_RIGHT;
-            b1_key = RAW_A1000_KEY_O;
-            b2_key = RAW_A1000_KEY_X;
-            start_key = RAW_A1000_KEY_START;
             break;
         case SYS_JXD_100:
             select_key = RAW_JXD100_KEY_SELECT;
             fps_key = RAW_JXD100_KEY_POWER;
             sound_key = RAW_JXD100_KEY_TRIANGLE;
-            up_key = RAW_JXD100_KEY_UP;
-            down_key = RAW_JXD100_KEY_DOWN;
-            left_key = RAW_JXD100_KEY_LEFT;
-            right_key = RAW_JXD100_KEY_RIGHT;
-            b1_key = RAW_JXD100_KEY_O;
-            b2_key = RAW_JXD100_KEY_X;
             start_key = RAW_JXD100_KEY_START;
             break;
         default:
@@ -397,7 +365,7 @@ int main()
         uint16_t *fb = gp.pixels + bitmap.viewport.x + bitmap.viewport.y * BMWIDTH;
         for (i = 0; i < 32; i++) {
             memset(fb + bitmap.width * 24 + i * 6, (keys.key2 & (1 << i)) ? 0xff : 0, 12);
-            memset(fb + bitmap.width * 25 + i * 6, (nkeys.key2 & (1 << i)) ? 0x0f : 0, 12);
+            memset(fb + bitmap.width * 25 + i * 6, (nkeys & (1 << i)) ? 0x0f : 0, 12);
         }
 #endif
         if (emuIfGraphShow() < 0)
@@ -428,7 +396,7 @@ int main()
 
         if (show_timing)
 #ifdef SHOW_KEYS
-            sprintf(fps, "%d/%dms %d k%d/%d", avg_full, avg_skip, frameskip, keys.key2, nkeys.key2);
+            sprintf(fps, "%d/%dms %d k%d/%d", avg_full, avg_skip, frameskip, keys.key2, nkeys);
 #else
             sprintf(fps, "%dms %d", (int)avg, frameskip);
 #endif
