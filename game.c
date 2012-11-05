@@ -197,10 +197,6 @@ void dummy_fun(void)
 
 int main()
 {
-    /* Turn off OS debug output. It is enabled by default on some systems
-       and causes horrible slowdowns .*/
-    *g_onoff_p = 0;
-
     int fd, res;
 
 #ifdef PROFILE
@@ -209,6 +205,11 @@ int main()
     
     // initialize the game api
     libgame_init();
+
+    /* Turn off OS debug output. It is enabled by default on some systems
+       and causes horrible slowdowns .*/
+    if (g_onoff_p)
+        *g_onoff_p = 0;
 
     /* Allocate a quarter more for non-widescreen mode (see below). */
     gp.pixels = malloc((BMWIDTH + VISIBLEWIDTH / 4) * 256 * 2);
