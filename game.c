@@ -361,13 +361,7 @@ int main()
                 bar_right += pitch;
             }
         }
-#if 0
-        uint16_t *fb = gp.pixels + bitmap.viewport.x + bitmap.viewport.y * BMWIDTH;
-        for (i = 0; i < 32; i++) {
-            memset(fb + bitmap.width * 24 + i * 6, (keys.key2 & (1 << i)) ? 0xff : 0, 12);
-            memset(fb + bitmap.width * 25 + i * 6, (nkeys & (1 << i)) ? 0x0f : 0, 12);
-        }
-#endif
+
         if (emuIfGraphShow() < 0)
             return 0;
 
