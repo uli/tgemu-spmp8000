@@ -345,8 +345,8 @@ int main()
             break;
     }
     
-    uint32_t avg_full = 16666;
-    uint32_t avg_skip = 16666;
+    int avg_full = 16666;
+    int avg_skip = 16666;
     
     while (1) {
         uint32_t start_time = libgame_utime();
