@@ -224,6 +224,7 @@ int h6280_execute(int cycles)
     return ret;
 }
 
+#if 0
 unsigned h6280_get_context (void *dst)
 {
 	if( dst )
@@ -236,7 +237,9 @@ void h6280_set_context (void *src)
 	if( src )
 		h6280 = *(h6280_Regs*)src;
 }
+#endif
 
+#if 0
 /* EXTERNAL CALL */
 unsigned h6280_get_pc (void)
 {
@@ -257,7 +260,9 @@ void h6280_set_sp (unsigned val)
 {
 	S = val;
 }
+#endif
 
+#if 0
 unsigned h6280_get_reg (int regnum)
 {
 	switch( regnum )
@@ -285,7 +290,9 @@ unsigned h6280_get_reg (int regnum)
 	}
 	return 0;
 }
+#endif
 
+#if 0
 void h6280_set_reg (int regnum, unsigned val)
 {
 	switch( regnum )
@@ -314,9 +321,11 @@ void h6280_set_reg (int regnum, unsigned val)
 			}
     }
 }
+#endif
 
 /*****************************************************************************/
 
+#if 0
 void h6280_set_nmi_line(int state)
 {
 	if (h6280.nmi_state == state) return;
@@ -326,6 +335,7 @@ void h6280_set_nmi_line(int state)
 		DO_INTERRUPT(H6280_NMI_VEC);
 	}
 }
+#endif
 
 /* EXTERNAL CALL */
 void h6280_set_irq_line(int irqline, int state)
