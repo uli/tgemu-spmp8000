@@ -69,9 +69,9 @@ register PAIR reg_pc asm("r7");
 register PAIR reg_ea asm("r8");
 register int h6280_ICount asm("r9");	/* cycle count */
 register union { UINT8 p; UINT32 pex; } reg_p asm("r10");
-register union { UINT8 a; UINT32 aex; } reg_a asm("r11");
-register union { UINT8 x; UINT32 xex; } reg_x asm("r5");
-register union { UINT8 y; UINT32 yex; } reg_y asm("r6");
+register union { UINT8 a; INT32 aex; } reg_a asm("r11");
+register union { UINT8 x; INT32 xex; } reg_x asm("r5");
+register union { UINT8 y; INT32 yex; } reg_y asm("r6");
 
 #define SAVE_REGS \
 	PAIR save_pc = reg_pc; \
