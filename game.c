@@ -258,7 +258,7 @@ int main()
     wait_for_key();
 
     char *romname = 0;
-    if ((res = select_file(NULL, "pce", &romname)) < 0) {
+    if ((res = select_file(NULL, "pce|gz|zip", &romname)) < 0) {
         fs_fprintf(fd, "select_file() %d\n", res);
         NativeGE_fsClose(fd);
         return 0;

@@ -41,9 +41,8 @@ reload_dir:
         _ecos_stat(de->d_name, &stats[dent_count]);
         if (extension) {
             if (!_ECOS_S_ISDIR(stats[dent_count].st_mode)) {
-                int len = strlen(de->d_name);
-                if (len < 4 || strcasecmp(de->d_name + len - 3, extension) ||
-                    de->d_name[len - 4] != '.')
+                char *ext = rindex(de->d_name, '.');
+                if (!ext || !strcasestr(extension, ext + 1))
                     continue;
             }
         }
