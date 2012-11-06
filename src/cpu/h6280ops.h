@@ -312,9 +312,9 @@ extern int io_page_r(int address);
  ***************************************************************/
 #define EA_IND													\
 	EA_ABS; 													\
-	tmp = RDMEM(EAD);											\
+	tmp = RDMEM(EAW);											\
 	EAD++; 														\
-	EAH = RDMEM(EAD);											\
+	EAH = RDMEM(EAW);											\
 	EAL = tmp
 
 /***************************************************************
@@ -323,40 +323,40 @@ extern int io_page_r(int address);
 #define EA_IAX                                                  \
 	EA_ABS;														\
 	EAD+=X;														\
-	tmp = RDMEM(EAD);											\
+	tmp = RDMEM(EAW);											\
 	EAD++; 	 													\
-	EAH = RDMEM(EAD);											\
+	EAH = RDMEM(EAW);											\
 	EAL = tmp
 
 /* read a value into tmp */
 #define RD_IMM	tmp = RDOPARG(); PCD++
 #define RD_IMM2	tmp2 = RDOPARG(); PCD++
 #define RD_ACC	tmp = A
-#define RD_ZPG	EA_ZPG; tmp = RDMEMZ(EAD)
-#define RD_ZPX	EA_ZPX; tmp = RDMEMZ(EAD)
-#define RD_ZPY	EA_ZPY; tmp = RDMEMZ(EAD)
-#define RD_ABS	EA_ABS; tmp = RDMEM(EAD)
-#define RD_ABX	EA_ABX; tmp = RDMEM(EAD)
-#define RD_ABY	EA_ABY; tmp = RDMEM(EAD)
-#define RD_ZPI	EA_ZPI; tmp = RDMEM(EAD)
-#define RD_IDX	EA_IDX; tmp = RDMEM(EAD)
-#define RD_IDY	EA_IDY; tmp = RDMEM(EAD)
+#define RD_ZPG	EA_ZPG; tmp = RDMEMZ(EAW)
+#define RD_ZPX	EA_ZPX; tmp = RDMEMZ(EAW)
+#define RD_ZPY	EA_ZPY; tmp = RDMEMZ(EAW)
+#define RD_ABS	EA_ABS; tmp = RDMEM(EAW)
+#define RD_ABX	EA_ABX; tmp = RDMEM(EAW)
+#define RD_ABY	EA_ABY; tmp = RDMEM(EAW)
+#define RD_ZPI	EA_ZPI; tmp = RDMEM(EAW)
+#define RD_IDX	EA_IDX; tmp = RDMEM(EAW)
+#define RD_IDY	EA_IDY; tmp = RDMEM(EAW)
 
 /* write a value from tmp */
-#define WR_ZPG	EA_ZPG; WRMEMZ(EAD, tmp)
-#define WR_ZPX	EA_ZPX; WRMEMZ(EAD, tmp)
-#define WR_ZPY	EA_ZPY; WRMEMZ(EAD, tmp)
-#define WR_ABS	EA_ABS; WRMEM(EAD, tmp)
-#define WR_ABX	EA_ABX; WRMEM(EAD, tmp)
-#define WR_ABY	EA_ABY; WRMEM(EAD, tmp)
-#define WR_ZPI	EA_ZPI; WRMEM(EAD, tmp)
-#define WR_IDX	EA_IDX; WRMEM(EAD, tmp)
-#define WR_IDY	EA_IDY; WRMEM(EAD, tmp)
+#define WR_ZPG	EA_ZPG; WRMEMZ(EAW, tmp)
+#define WR_ZPX	EA_ZPX; WRMEMZ(EAW, tmp)
+#define WR_ZPY	EA_ZPY; WRMEMZ(EAW, tmp)
+#define WR_ABS	EA_ABS; WRMEM(EAW, tmp)
+#define WR_ABX	EA_ABX; WRMEM(EAW, tmp)
+#define WR_ABY	EA_ABY; WRMEM(EAW, tmp)
+#define WR_ZPI	EA_ZPI; WRMEM(EAW, tmp)
+#define WR_IDX	EA_IDX; WRMEM(EAW, tmp)
+#define WR_IDY	EA_IDY; WRMEM(EAW, tmp)
 
 /* write back a value from tmp to the last EA */
 #define WB_ACC	A = (UINT8)tmp;
-#define WB_EA	WRMEM(EAD, tmp)
-#define WB_EAZ	WRMEMZ(EAD, tmp)
+#define WB_EA	WRMEM(EAW, tmp)
+#define WB_EAZ	WRMEMZ(EAW, tmp)
 
 /***************************************************************
  *

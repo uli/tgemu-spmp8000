@@ -176,7 +176,6 @@ int h6280_execute(int cycles)
     {
 		int i;
 		for (i = 0; i < 8; i++) {
-			//char buf[80];
 			/* Speed hack: executing several insns at a time speeds things
 			   up considerably. No (additional) incompatibilities
 			   have been observed in casual testing. */
@@ -186,7 +185,6 @@ int h6280_execute(int cycles)
 			in=RDOP();
 			PCW++;
 			insnh6280[in]();
-			//write(dfd, buf, sprintf(buf, "in %02X PC %04X -> %04X\n", in, h6280.ppc.d, reg_pc.d));
 		}
 		
 		/* Check internal timer */
