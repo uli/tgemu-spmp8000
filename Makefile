@@ -13,7 +13,7 @@ OBJS	= $(RESOBJS) game.o text.o file.o \
   src/vdc.o \
   src/cpu/h6280.o \
 
-LIBS	= -lgame -lc -lgcc -lz
+LIBS	= -lgame -lz -lc -lgcc
 
 include ../../libgame/libgame.mk
 CFLAGS += -Isrc -Isrc/cpu -DLSB_FIRST -DFAST_MEM -O3 -funroll-loops -fomit-frame-pointer

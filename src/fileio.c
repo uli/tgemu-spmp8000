@@ -1,8 +1,7 @@
+#include <stdio.h>
 
 #include "shared.h"
 #include "pcecrc.h"
-#include <libgame.h>
-#include <fcntl.h>
 
 /* Name of the loaded file */
 char game_name[0x100];
@@ -14,12 +13,13 @@ int load_rom(char *filename, int split, int flip)
     #include "bitflip.h"
     uint8 header[0x200];
     uint8 *ptr = NULL, *buf = NULL;
+    uint32 crc;
     int size;
+    uint32 n;
 
     /* Default */
     strcpy(game_name, filename);
 
-#if 0
     if(check_zip(filename))
     {
         unzFile *fd = NULL;
@@ -61,7 +61,7 @@ int load_rom(char *filename, int split, int flip)
 
         /* Read (decompress) the file */
         ret = unzReadCurrentFile(fd, buf, info.uncompressed_size);
-        if(ret != info.uncompressed_size)
+        if(ret != (int)info.uncompressed_size)
         {
             free(buf);
             unzCloseCurrentFile(fd);
@@ -85,33 +85,28 @@ int load_rom(char *filename, int split, int flip)
         }
     }
     else
-#endif
     {
-        int gd = 0;
+        gzFile gd = NULL;
 
         /* Open file */
-        if ((gd = open(filename, O_RDONLY)) < 0)
-          return (2);
+        gd = gzopen(filename, "rb");
+        if(!gd) return (0);
 
         /* Get file size */
-        struct _ecos_stat st;
-        _ecos_fstat(gd, &st);
-        size = st.st_size;
+        size = gzsize(gd);
 
         /* Allocate file data buffer */
         buf = malloc(size);
         if(!buf) {
-            close(gd);
+            gzclose(gd);
             return (0);
         }
 
         /* Read file data */
-        int res = read(gd, buf, size);
-        if (res != size)
-            return 42;
+        gzread(gd, buf, size);
 
         /* Close file */
-        close(gd);
+        gzclose(gd);
     }
 
     /* Check for 512-byte header */
@@ -124,12 +119,11 @@ int load_rom(char *filename, int split, int flip)
     }
 
     /* Generate CRC and print information */
-    uint32 crc = crc32(0, buf, size);
+    crc = crc32(0, buf, size);
 
     /* Look up game CRC in the CRC database, and set up flip and
        split options accordingly */
-    unsigned int n;
-    for(n = 0; n < (sizeof(pcecrc_list) / sizeof(t_pcecrc)); n += 1)
+    for(n = 0; n < (sizeof(pcecrc_list) / sizeof(t_pcecrc)); n++)
     {
         if(crc == pcecrc_list[n].crc)
         {
@@ -180,27 +174,35 @@ int load_rom(char *filename, int split, int flip)
 }
 
 
+int file_exist(char *filename)
+{
+    FILE *fd = fopen(filename, "rb");
+    if(!fd) return (0);
+    fclose(fd);
+    return (1);
+}
+
+
 int load_file(char *filename, char *buf, int size)
 {
-    int fd = open(filename, O_RDONLY);
+    FILE *fd = fopen(filename, "rb");
     if(!fd) return (0);
-    read(fd, buf, size);
-    close(fd);
+    fread(buf, size, 1, fd);
+    fclose(fd);
     return (1);
 }
 
 
 int save_file(char *filename, uint8 *buf, int size)
 {
-    int fd = open(filename, O_WRONLY, 0644);
-    if(!fd) return (0);
-    write(fd, buf, size);
-    close(fd);
+    FILE *fd = NULL;
+    if(!(fd = fopen(filename, "wb"))) return (0);
+    fwrite(buf, size, 1, fd);
+    fclose(fd);
     return (1);
 }
 
 
-#if 0
 int check_zip(char *filename)
 {
 #ifdef DOS
@@ -217,8 +219,9 @@ int check_zip(char *filename)
 #endif
     return (0);
 }
+
 /* Because gzio.c doesn't work */
-int gzsize(gzFile *gd)
+int gzsize(gzFile gd)
 {
     #define CHUNKSIZE   0x10000
     int size = 0, length = 0;
@@ -234,4 +237,3 @@ int gzsize(gzFile *gd)
     #undef CHUNKSIZE
 }
 
-#endif

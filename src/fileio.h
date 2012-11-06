@@ -11,6 +11,6 @@ int file_exist(char *filename);
 int load_file(char *filename, char *buf, int size);
 int save_file(char *filename, uint8 *buf, int size);
 int check_zip(char *filename);
-int gzsize(gzFile *gd);
+int gzsize(gzFile gd);
 
 #endif /* _FILEIO_H_ */
