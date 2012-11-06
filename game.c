@@ -188,6 +188,12 @@ key_data_t wait_for_key(void)
 #ifdef PROFILE
 void init_profile(void);
 void dump_profile(void);
+
+int profile_exit(void)
+{
+    dump_profile();
+    return NativeGE_gameExit();
+}
 #endif
 
 int main()
@@ -196,6 +202,7 @@ int main()
 
 #ifdef PROFILE
     init_profile();
+    g_stEmuAPIs->exit = profile_exit;
 #endif
     
     // initialize the game api
@@ -344,10 +351,6 @@ int main()
 
         if (show_timing) {
             render_text_ex((uint16_t *)bitmap.data, bitmap.pitch / 2, fps, bitmap.viewport.x, bitmap.viewport.y);
-#ifdef PROFILE
-            dump_profile();
-            return 0;
-#endif
         }
         if (!widescreen) {
             /* In non-widescreen mode, the black bars to the left and right

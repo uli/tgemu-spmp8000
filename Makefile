@@ -13,6 +13,10 @@ OBJS	= $(RESOBJS) game.o text.o file.o \
   src/vdc.o \
   src/cpu/h6280.o \
 
+ifeq ($(PROFILE),1)
+OBJS += profile.o
+endif
+
 LIBS	= -lgame -lz -lc -lgcc
 
 include ../../libgame/libgame.mk
@@ -20,7 +24,6 @@ CFLAGS += -Isrc -Isrc/cpu -DLSB_FIRST -DFAST_MEM -O3 -funroll-loops -fomit-frame
 
 ifeq ($(PROFILE),1)
 CFLAGS += -finstrument-functions -DPROFILE
-OBJS += profile.o
 profile.o: profile.c
 	$(TOOLCHAIN)gcc -O2 -c $< -o $@
 endif
