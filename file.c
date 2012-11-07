@@ -155,8 +155,8 @@ restart:
         char *name;
         uint32_t index;
     } *kp, keys[] = {
-        {"Button I", EMU_KEY_X},
-        {"Button II", EMU_KEY_O},
+        {"Button I", EMU_KEY_O},
+        {"Button II", EMU_KEY_X},
         {"Run", EMU_KEY_START},
         {"Select", EMU_KEY_SELECT},
         {"Sound on/off", EMU_KEY_TRIANGLE},
