@@ -69,6 +69,9 @@ void update_input(void)
 
     input.pad[0] = 0;
 
+    key_data_t keys;
+    NativeGE_getKeyInput4Ntv(&keys);
+    
     nkeys = emuIfKeyGetInput(&keymap);
     if (nkeys & keymap.scancode[EMU_KEY_UP])
         input.pad[0] |= INPUT_UP;
