@@ -136,3 +136,79 @@ reload_dir:
     _ecos_chdir(wd);
     return 0;
 }
+
+static int bit_count(uint32_t val)
+{
+    int ret = 0;
+    do {
+        ret += (val & 1);
+        val >>= 1;
+    } while (val);
+    return ret;
+}
+
+void map_buttons(keymap_t *keymap)
+{
+    keymap_t save = *keymap;
+restart:
+    gDisplayDev->lcdClear();
+    render_text("Press button for: (DOWN to skip)", 10, 10);
+    struct {
+        char *name;
+        uint32_t index;
+    } *kp, keys[] = {
+        {"Button I", EMU_KEY_X},
+        {"Button II", EMU_KEY_O},
+        {"Run", EMU_KEY_START},
+        {"Select", EMU_KEY_SELECT},
+        {"Sound on/off", EMU_KEY_TRIANGLE},
+        {"Widescreen", EMU_KEY_L},
+        {"Show timing info", EMU_KEY_R},
+        {0, 0}
+    };
+    int y = 20;
+    int key;
+    char buf[10];
+    for (kp = keys; kp->name; kp++, y += 10) {
+        render_text(kp->name, 10, y);
+        cache_sync();
+        gDisplayDev->lcdFlip();
+        /* Wait for keypad silence. */
+        while (emuIfKeyGetInput(keymap)) {}
+        /* Wait for single key press. */
+        while (!(key = emuIfKeyGetInput(keymap)) || bit_count(key) != 1) {}
+        if (key & keymap->scancode[EMU_KEY_DOWN]) {
+            render_text("skipped", gDisplayDev->getWidth() - 10 - 7 * 8, y);
+            continue;
+        }
+        sprintf(buf, "%9d", key);
+        render_text(buf, gDisplayDev->getWidth() - 10 - 10*8, y);
+        keymap->scancode[kp->index] = key;
+    }
+    render_text("Press UP to save, DOWN to start over.", 10, y + 20);
+    cache_sync();
+    gDisplayDev->lcdFlip();
+    for (;;) {
+        key_data_t keys = wait_for_key();
+        if (keys.key2 & GE_KEY_DOWN)
+            goto restart;
+        else if (keys.key2 & GE_KEY_UP)
+            break;
+    }
+    if (memcmp(keymap, &save, sizeof(keymap_t))) {
+        FILE *fp = fopen("tgemu.map", "wb");
+        if (fp) {
+            fwrite(&keymap->scancode[4], sizeof(uint32_t), 16, fp);
+            fclose(fp);
+        }
+    }
+}
+
+void load_buttons(keymap_t *keymap)
+{
+    FILE *fp = fopen("tgemu.map", "rb");
+    if (fp) {
+        fread(&keymap->scancode[4], sizeof(uint32_t), 16, fp);
+        fclose(fp);
+    }
+}

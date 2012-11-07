@@ -58,11 +58,6 @@ graph_params_t gp;
 int show_timing = 0;
 int widescreen = 1;
 
-/* Device-specific key mapping. */
-int widescreen_key = 0;
-int fps_key = 0;
-int sound_key = 0;
-
 uint32_t nkeys;
 keymap_t keymap;
 
@@ -93,7 +88,7 @@ void update_input(void)
         input.pad[0] |= INPUT_SELECT;
     if (nkeys & keymap.scancode[EMU_KEY_START])
         input.pad[0] |= INPUT_RUN;
-    if (nkeys & fps_key) {
+    if (nkeys & keymap.scancode[EMU_KEY_R]) {
         if (!show_timing_triggered) {
             show_timing_triggered = 1;
             show_timing = !show_timing;
@@ -102,7 +97,7 @@ void update_input(void)
     else {
         show_timing_triggered = 0;
     }
-    if (nkeys & widescreen_key) {
+    if (nkeys & keymap.scancode[EMU_KEY_L]) {
         if (!widescreen_triggered) {
             widescreen_triggered = 1;
             widescreen = !widescreen;
@@ -134,7 +129,7 @@ void update_input(void)
     else {
         widescreen_triggered = 0;
     }
-    if (nkeys & sound_key) {
+    if (nkeys & keymap.scancode[EMU_KEY_TRIANGLE]) {
         if (!sound_triggered) {
             snd.enabled = !snd.enabled;
             sound_triggered = 1;
@@ -206,6 +201,7 @@ int main()
     }
     for (i = 0; i < 20; i++)
         fs_fprintf(fd, "key %d scancode %08x\n", i, keymap.scancode[i]);
+    load_buttons(&keymap);
 
     res = load_fonts();
     if (res < 0) {
@@ -214,11 +210,17 @@ int main()
     // memset(gDisplayDev->getShadowBuffer(), 0, gDisplayDev->getWidth() *
     // gDisplayDev->getHeight() * 2);
     gDisplayDev->lcdClear();
-    render_text("TGEmu SPMP", (gDisplayDev->getWidth() - 10 * 8) / 2, 32);
-    render_text("Press any key", (gDisplayDev->getWidth() - 13 * 8) / 2, 200);
+    char *msg = "TGEmu SPMP";
+    render_text(msg, (gDisplayDev->getWidth() - strlen(msg) * 8) / 2, 32);
+    msg = "Press DOWN to map buttons";
+    render_text(msg, (gDisplayDev->getWidth() - strlen(msg) * 8) / 2, 180);
+    msg = "Press any other key to continue";
+    render_text(msg, (gDisplayDev->getWidth() - strlen(msg) * 8) / 2, 200);
     cache_sync();
     gDisplayDev->lcdFlip();
-    wait_for_key();
+    key_data_t keys = wait_for_key();
+    if (keys.key2 & GE_KEY_DOWN)
+        map_buttons(&keymap);
 
     char *romname = 0;
     if ((res = select_file(NULL, "pce|gz|zip", &romname)) < 0) {
@@ -264,21 +266,6 @@ int main()
     char fps[16] = "";
 #endif
 
-    switch (libgame_system_id) {
-        case SYS_JXD_1000:
-        case SYS_JXD_A1000:
-            widescreen_key = RAW_A1000_KEY_L;
-            fps_key = RAW_A1000_KEY_R;
-            sound_key = RAW_A1000_KEY_TRIANGLE;
-            break;
-        case SYS_JXD_100:
-            fps_key = RAW_JXD100_KEY_POWER;
-            sound_key = RAW_JXD100_KEY_TRIANGLE;
-            break;
-        default:
-            break;
-    }
-    
     int avg_full = 16666;
     int avg_skip = 16666;
     
