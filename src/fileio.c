@@ -28,27 +28,27 @@ int load_rom(char *filename, int split, int flip)
 
         /* Attempt to open the archive */
         fd = unzOpen(filename);
-        if(!fd) return (0);
+        if(!fd) return (-1);
 
         /* Go to first file in archive */
         ret = unzGoToFirstFile(fd);
         if(ret != UNZ_OK) {
             unzClose(fd);
-            return (0);
+            return (-2);
         }
 
         /* Get information on the file */
         ret = unzGetCurrentFileInfo(fd, &info, game_name, 0x100, NULL, 0, NULL, 0);
         if(ret != UNZ_OK) {
             unzClose(fd);
-            return (0);
+            return (-3);
         }
 
         /* Open the file for reading */
         ret = unzOpenCurrentFile(fd);
         if(ret != UNZ_OK) {
             unzClose(fd);
-            return (0);
+            return (-4);
         }
 
         /* Allocate file data buffer */
@@ -56,7 +56,7 @@ int load_rom(char *filename, int split, int flip)
         buf = malloc(size);
         if(!buf) {
             unzClose(fd);
-            return (0);
+            return (-5);
         }
 
         /* Read (decompress) the file */
@@ -66,7 +66,7 @@ int load_rom(char *filename, int split, int flip)
             free(buf);
             unzCloseCurrentFile(fd);
             unzClose(fd);
-            return (0);
+            return (-6);
         }
 
         /* Close the current file */
@@ -74,14 +74,14 @@ int load_rom(char *filename, int split, int flip)
         if(ret != UNZ_OK) {
             free(buf);
             unzClose(fd);
-            return (0);
+            return (-7);
         }
 
         /* Close the archive */
         ret = unzClose(fd);
         if(ret != UNZ_OK) {
             free(buf);
-            return (0);
+            return (-8);
         }
     }
     else
@@ -90,7 +90,7 @@ int load_rom(char *filename, int split, int flip)
 
         /* Open file */
         gd = gzopen(filename, "rb");
-        if(!gd) return (0);
+        if(!gd) return (-9);
 
         /* Get file size */
         size = gzsize(gd);
@@ -99,7 +99,7 @@ int load_rom(char *filename, int split, int flip)
         buf = malloc(size);
         if(!buf) {
             gzclose(gd);
-            return (0);
+            return (-10);
         }
 
         /* Read file data */

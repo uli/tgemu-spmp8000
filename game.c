@@ -235,7 +235,7 @@ int main()
     fs_fprintf(fd, "loading ROM\n");
     res = load_rom(romname, 0, 0);
     if (res != 1) {
-        fs_fprintf(fd, "failed to load ROM: %d\n", res);
+        fs_fprintf(fd, "failed to load ROM %s: %d\n", romname, res);
         NativeGE_fsClose(fd);
         return 0;
     }
