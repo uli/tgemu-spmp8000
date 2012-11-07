@@ -156,6 +156,7 @@ void h6280_reset(void)
 		h6280.irq_state[i] = CLEAR_LINE;
 
     h6280_speed = 1; /* default = 7.16MHz (?) */
+    STORE_REGS
     RESTORE_REGS
 }
 
