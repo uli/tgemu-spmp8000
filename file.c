@@ -53,8 +53,6 @@ int select_file(const char *start, const char *extension, char **file)
     stats = malloc(sizeof(struct _ecos_stat) * 10);
     int num_dents = 10;
 
-    char wd[256];
-    _ecos_getcwd(wd, 256);
     if (start) {
         if (_ecos_chdir(start) < 0)
             return -1;
@@ -134,7 +132,6 @@ reload_dir:
     *file = filename;
     free(dents);
     free(stats);
-    _ecos_chdir(wd);
     return 0;
 }
 
