@@ -1,9 +1,38 @@
+#include "file.h"
 #include "text.h"
 #include <unistd.h>
-#include "libgame.h"
 #include <string.h>
 #include <sys/stat.h>
 
+key_data_t wait_for_key(void)
+{
+    static int auto_repeat = 0;
+    static key_data_t okeys;
+    key_data_t keys;
+    NativeGE_getKeyInput4Ntv(&keys);
+    uint32_t last_press_tick = NativeGE_getTime();
+    while (auto_repeat && keys.key2 == okeys.key2 && NativeGE_getTime() < last_press_tick + 100) {
+        NativeGE_getKeyInput4Ntv(&keys);
+    }
+    if (auto_repeat && keys.key2 == okeys.key2)
+        return keys;
+    auto_repeat = 0;
+    last_press_tick = NativeGE_getTime();
+    while (keys.key2 && keys.key2 == okeys.key2) {
+        NativeGE_getKeyInput4Ntv(&keys);
+        if (NativeGE_getTime() > last_press_tick + 500) {
+            auto_repeat = 1;
+            okeys = keys;
+            return keys;
+        }
+    }
+    okeys = keys;
+    while (okeys.key2 == keys.key2) {
+        NativeGE_getKeyInput4Ntv(&keys);
+    }
+    okeys = keys;
+    return keys;
+}
 extern key_data_t wait_for_key(void);
 
 static void invert(uint16_t *start, int size)
