@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <stdio.h>
 
 key_data_t wait_for_key(void)
 {
