@@ -65,6 +65,8 @@
 ******************************************************************************/
 
 #include "osd_cpu.h"
+
+#ifdef __arm__
 register PAIR reg_pc asm("r7");
 register PAIR reg_ea asm("r8");
 register int h6280_ICount asm("r9");	/* cycle count */
@@ -102,6 +104,14 @@ register unsigned char ** reg_read_ptr asm ("r6");
 	h6280.p = reg_p.p; \
 	h6280.a = reg_a.a; \
 
+#else
+int h6280_ICount;
+#define SAVE_REGS do {} while (0);
+#define RESTORE_REGS do {} while (0);
+#define LOAD_REGS do {} while (0);
+#define STORE_REGS do {} while (0);
+#endif
+
 #include "cpuintrf.h"
 #include "h6280.h"
 #include <stdio.h>
@@ -135,7 +145,7 @@ void h6280_reset(void)
     /* read the reset vector into PC */
 	PCL = RDMEM(H6280_RESET_VEC);
 	PCH = RDMEM((H6280_RESET_VEC+1));
-	h6280.pc.d = reg_pc.d;
+	h6280.pc.d = PCD;
 
 	/* timer off by default */
 	h6280.timer_status=0;
@@ -175,7 +185,7 @@ int h6280_execute(int cycles)
 			/* Speed hack: executing several insns at a time speeds things
 			   up considerably. No (additional) incompatibilities
 			   have been observed in casual testing. */
-			h6280.ppc.d = reg_pc.d;
+			h6280.ppc.d = PCD;
 
 			/* Execute 1 instruction */
 			in=RDOP();
@@ -197,7 +207,7 @@ int h6280_execute(int cycles)
 		lastcycle = h6280_ICount;
 
 		/* If PC has not changed we are stuck in a tight loop, may as well finish */
-		if( reg_pc.d == h6280.ppc.d )
+		if( PCD == h6280.ppc.d )
 		{
 			if (h6280_ICount > 0) h6280_ICount=0;
 			h6280.extra_cycles = 0;

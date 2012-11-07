@@ -25,7 +25,11 @@
 #define A	reg_a.aex
 #define X	h6280.x
 #define Y	h6280.y
+#ifdef __arm__
 #define P	reg_p.pex
+#else
+#define P       h6280.p
+#endif
 #define S	h6280.sp.b.l
 
 #if LAZY_FLAGS
@@ -44,20 +48,34 @@
 
 #endif
 
+#ifdef __arm__
 #define EAL reg_ea.b.l
 #define EAH reg_ea.b.h
 #define EAW reg_ea.w.l
 #define EAD reg_ea.d
+#else
+#define EAL h6280.ea.b.l
+#define EAH h6280.ea.b.h
+#define EAW h6280.ea.w.l
+#define EAD h6280.ea.d
+#endif
 
 #define ZPL h6280.zp.b.l
 #define ZPH h6280.zp.b.h
 #define ZPW h6280.zp.w.l
 #define ZPD h6280.zp.d
 
+#ifdef __arm__
 #define PCL reg_pc.b.l
 #define PCH reg_pc.b.h
 #define PCW reg_pc.w.l
 #define PCD reg_pc.d
+#else
+#define PCL h6280.pc.b.l
+#define PCH h6280.pc.b.h
+#define PCW h6280.pc.w.l
+#define PCD h6280.pc.d
+#endif
 
 #define DO_INTERRUPT(vector)									\
 {																\
@@ -112,7 +130,12 @@ extern unsigned char *write_ptr[8];
 extern void io_page_w(int address, int value);
 extern int io_page_r(int address);
 
+#ifdef __arm__
 #define READ_PTR reg_read_ptr
+#else
+#define READ_PTR read_ptr
+#endif
+
 #define cpu_readop21_fast(addr)         READ_PTR[(addr) >> 13][(addr) & 0x1FFF]
 #define cpu_readmem21_fast(addr)        (READ_PTR[(addr) >> 13] == 0) ? io_page_r((addr) & 0x1FFF) : READ_PTR[(addr) >> 13][(addr) & 0x1FFF]
 #define cpu_writemem21_fast(addr,value) if(write_ptr[(addr) >> 13] == 0) io_page_w((addr) & 0x1FFF, value); else (write_ptr[(addr) >> 13][(addr) & 0x1FFF] = value)
