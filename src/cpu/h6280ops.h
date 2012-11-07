@@ -153,10 +153,10 @@ extern int io_page_r(int address);
         +( ram[ ((addr+1)&0x1fff)] <<8)
 
 #define RDOP()													\
-    cpu_readop21_fast(PCW)
+    cpu_readop21_fast(PCD)
 
 #define RDOPARG()												\
-    cpu_readop21_fast(PCW)
+    cpu_readop21_fast(PCD)
 
 #define RDMEM(addr)                                             \
     cpu_readmem21_fast(addr)
