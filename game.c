@@ -61,15 +61,8 @@ int widescreen = 1;
 /* Device-specific key mapping. */
 int widescreen_key = 0;
 int fps_key = 0;
-int select_key = 0;
 int sound_key = 0;
 
-/* The "start" key triggers GE_KEY_START on the A1000, but on the
-   JXD100, it's the "square" key.  Not a dealbreaker, but we should
-   support the real start key as well.  */
-int start_key = 0;
-
-key_data_t keys;
 uint32_t nkeys;
 keymap_t keymap;
 
@@ -81,25 +74,25 @@ void update_input(void)
 
     input.pad[0] = 0;
 
-    NativeGE_getKeyInput4Ntv(&keys);
-    if (keys.key2 & GE_KEY_UP)
-        input.pad[0] |= INPUT_UP;
-    if (keys.key2 & GE_KEY_DOWN)
-        input.pad[0] |= INPUT_DOWN;
-    if (keys.key2 & GE_KEY_LEFT)
-        input.pad[0] |= INPUT_LEFT;
-    if (keys.key2 & GE_KEY_RIGHT)
-        input.pad[0] |= INPUT_RIGHT;
-    if (keys.key2 & GE_KEY_X)
-        input.pad[0] |= INPUT_B2;
-    if (keys.key2 & GE_KEY_O)
-        input.pad[0] |= INPUT_B1;
-    if (keys.key2 & GE_KEY_START)
-        input.pad[0] |= INPUT_RUN;
-    /* These are all the keys we can use through the 4Ntv interface.
-       To get access to the rest, we use the emulator interface. */
-
     nkeys = emuIfKeyGetInput(&keymap);
+    if (nkeys & keymap.scancode[EMU_KEY_UP])
+        input.pad[0] |= INPUT_UP;
+    if (nkeys & keymap.scancode[EMU_KEY_DOWN])
+        input.pad[0] |= INPUT_DOWN;
+    if (nkeys & keymap.scancode[EMU_KEY_LEFT])
+        input.pad[0] |= INPUT_LEFT;
+    if (nkeys & keymap.scancode[EMU_KEY_RIGHT])
+        input.pad[0] |= INPUT_RIGHT;
+    if (nkeys & keymap.scancode[EMU_KEY_X])
+        input.pad[0] |= INPUT_B2;
+    if (nkeys & keymap.scancode[EMU_KEY_O])
+        input.pad[0] |= INPUT_B1;
+    if (nkeys & keymap.scancode[EMU_KEY_START])
+        input.pad[0] |= INPUT_RUN;
+    if (nkeys & keymap.scancode[EMU_KEY_SELECT])
+        input.pad[0] |= INPUT_SELECT;
+    if (nkeys & keymap.scancode[EMU_KEY_START])
+        input.pad[0] |= INPUT_RUN;
     if (nkeys & fps_key) {
         if (!show_timing_triggered) {
             show_timing_triggered = 1;
@@ -141,10 +134,6 @@ void update_input(void)
     else {
         widescreen_triggered = 0;
     }
-    if (nkeys & select_key)
-        input.pad[0] |= INPUT_SELECT;
-    if (nkeys & start_key)
-        input.pad[0] |= INPUT_RUN;
     if (nkeys & sound_key) {
         if (!sound_triggered) {
             snd.enabled = !snd.enabled;
@@ -209,6 +198,7 @@ int main()
     res = emuIfSoundInit(&sp);
     fs_fprintf(fd, "emuIfSoundInit returns %d, sp.rate %d\n", res, sp.rate);
 
+    keymap.controller = 0;
     if (emuIfKeyInit(&keymap) < 0) {
         fs_fprintf(fd, "emuIfKeyInit() failed\n");
         NativeGE_fsClose(fd);
@@ -279,14 +269,11 @@ int main()
         case SYS_JXD_A1000:
             widescreen_key = RAW_A1000_KEY_L;
             fps_key = RAW_A1000_KEY_R;
-            select_key = RAW_A1000_KEY_SELECT;
             sound_key = RAW_A1000_KEY_TRIANGLE;
             break;
         case SYS_JXD_100:
-            select_key = RAW_JXD100_KEY_SELECT;
             fps_key = RAW_JXD100_KEY_POWER;
             sound_key = RAW_JXD100_KEY_TRIANGLE;
-            start_key = RAW_JXD100_KEY_START;
             break;
         default:
             break;
@@ -366,7 +353,7 @@ int main()
 
         if (show_timing)
 #ifdef SHOW_KEYS
-            sprintf(fps, "%d/%dms %d k%d/%d", avg_full, avg_skip, frameskip, keys.key2, nkeys);
+            sprintf(fps, "%d/%dms %d k%d", avg_full, avg_skip, frameskip, nkeys);
 #else
             sprintf(fps, "%dms %d", (int)avg, frameskip);
 #endif
