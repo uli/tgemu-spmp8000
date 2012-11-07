@@ -3,7 +3,7 @@ PROFILE=0
 
 TARGET	= tgemu
 
-OBJS	= $(RESOBJS) game.o text.o file.o \
+OBJS	= game.o text.o file.o \
   src/fileio.o \
   src/pce.o \
   src/psg.o \
