@@ -1,3 +1,4 @@
+LIBSPMP8K = ../..
 PROFILE=0
 
 TARGET	= tgemu
@@ -19,11 +20,13 @@ endif
 
 LIBS	= -lgame -lz -lc -lgcc
 
-include ../../libgame/libgame.mk
+include $(LIBSPMP8K)/main.cfg
+include $(LIBGAME)/libgame.mk
+
 CFLAGS += -Isrc -Isrc/cpu -DLSB_FIRST -DFAST_MEM -O3 -funroll-loops -fomit-frame-pointer
 
 ifeq ($(PROFILE),1)
 CFLAGS += -finstrument-functions -DPROFILE
 profile.o: profile.c
-	$(TOOLCHAIN)gcc -O2 -c $< -o $@
+	$(CC) -O2 -c $< -o $@
 endif
