@@ -70,8 +70,7 @@ register PAIR reg_ea asm("r8");
 register int h6280_ICount asm("r9");	/* cycle count */
 register union { UINT8 p; UINT32 pex; } reg_p asm("r10");
 register union { UINT8 a; INT32 aex; } reg_a asm("r11");
-register union { UINT8 x; INT32 xex; } reg_x asm("r5");
-register union { UINT8 y; INT32 yex; } reg_y asm("r6");
+register unsigned char ** reg_read_ptr asm ("r6");
 
 #define SAVE_REGS \
 	PAIR save_pc = reg_pc; \
@@ -79,8 +78,7 @@ register union { UINT8 y; INT32 yex; } reg_y asm("r6");
 	int save_ICount = h6280_ICount; \
 	UINT32 save_p = reg_p.pex; \
 	UINT32 save_a = reg_a.aex; \
-	UINT32 save_x = reg_x.xex; \
-	UINT32 save_y = reg_y.yex; \
+	unsigned char **save_read_ptr = reg_read_ptr; \
 
 #define RESTORE_REGS \
 	reg_pc = save_pc; \
@@ -88,24 +86,21 @@ register union { UINT8 y; INT32 yex; } reg_y asm("r6");
 	h6280_ICount = save_ICount; \
 	reg_p.pex = save_p; \
 	reg_a.aex = save_a; \
-	reg_x.xex = save_x; \
-	reg_y.yex = save_y; \
+	reg_read_ptr = save_read_ptr; \
 
 #define LOAD_REGS \
 	reg_pc = h6280.pc; \
 	reg_ea = h6280.ea; \
 	reg_p.pex = h6280.p; \
 	reg_a.aex = h6280.a; \
-	reg_x.xex = h6280.x; \
-	reg_y.yex = h6280.y; \
+	reg_read_ptr = read_ptr; \
 
+/* reg_read_ptr doesn't change, so we don't have to write it back. */
 #define STORE_REGS \
 	h6280.pc = reg_pc; \
 	h6280.ea = reg_ea; \
 	h6280.p = reg_p.p; \
 	h6280.a = reg_a.a; \
-	h6280.x = reg_x.x; \
-	h6280.y = reg_y.y; \
 
 #include "cpuintrf.h"
 #include "h6280.h"
@@ -129,7 +124,8 @@ void h6280_reset(void)
 
 	/* wipe out the h6280 structure */
 	memset(&h6280, 0, sizeof(h6280_Regs));
-
+	LOAD_REGS
+	
 	/* set I and Z flags */
 	P = _fI | _fZ;
 

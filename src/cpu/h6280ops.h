@@ -23,8 +23,8 @@
 
 /* some shortcuts for improved readability */
 #define A	reg_a.aex
-#define X	reg_x.xex
-#define Y	reg_y.yex
+#define X	h6280.x
+#define Y	h6280.y
 #define P	reg_p.pex
 #define S	h6280.sp.b.l
 
@@ -112,8 +112,9 @@ extern unsigned char *write_ptr[8];
 extern void io_page_w(int address, int value);
 extern int io_page_r(int address);
 
-#define cpu_readop21_fast(addr)         read_ptr[(addr) >> 13][(addr) & 0x1FFF]
-#define cpu_readmem21_fast(addr)        (read_ptr[(addr) >> 13] == 0) ? io_page_r((addr) & 0x1FFF) : read_ptr[(addr) >> 13][(addr) & 0x1FFF]
+#define READ_PTR reg_read_ptr
+#define cpu_readop21_fast(addr)         READ_PTR[(addr) >> 13][(addr) & 0x1FFF]
+#define cpu_readmem21_fast(addr)        (READ_PTR[(addr) >> 13] == 0) ? io_page_r((addr) & 0x1FFF) : READ_PTR[(addr) >> 13][(addr) & 0x1FFF]
 #define cpu_writemem21_fast(addr,value) if(write_ptr[(addr) >> 13] == 0) io_page_w((addr) & 0x1FFF, value); else (write_ptr[(addr) >> 13][(addr) & 0x1FFF] = value)
 
 #define RDMEMZ(addr)        ram[addr & 0x1FFF];
