@@ -43,7 +43,7 @@ void pce_reset(void)
     memset(dummy, 0, 0x2000);
     bank_reset();
 #endif
-    //load_file("pce.brm", bram, 0x2000);
+    load_file("pce.brm", bram, 0x2000);
     h6280_reset();
     h6280_set_irq_callback(&pce_irq_callback);
 }

@@ -183,7 +183,7 @@ int file_exist(char *filename)
 }
 
 
-int load_file(char *filename, char *buf, int size)
+int load_file(char *filename, uint8 *buf, int size)
 {
     FILE *fd = fopen(filename, "rb");
     if(!fd) return (0);
