@@ -198,7 +198,7 @@ int profile_exit(void)
 
 int main()
 {
-    int fd, res;
+    int fd, res, i;
 
 #ifdef PROFILE
     init_profile();
@@ -244,6 +244,8 @@ int main()
         NativeGE_fsClose(fd);
         return 0;
     }
+    for (i = 0; i < 20; i++)
+        fs_fprintf(fd, "key %d scancode %08x\n", i, keymap.scancode[i]);
 
     res = load_fonts();
     if (res < 0) {
@@ -355,7 +357,6 @@ int main()
             /* In non-widescreen mode, the black bars to the left and right
                are filled with non-visible graphic artifacts left there by
                the emulator, so we have to blank them ourselves. */
-            int i;
             uint16_t *bar_left = gp.pixels + bitmap.viewport.x + (bitmap.viewport.y) * bitmap.pitch / 2;
             uint16_t *bar_right = bar_left + bitmap.viewport.w + bitmap.viewport.w / 8;
             uint32_t pitch = bitmap.pitch / 2;
@@ -374,7 +375,6 @@ int main()
         avg_full = (avg_full * 7 + libgame_utime() - start_time) / 8;
         update_sound();
 
-        int i;
         for (i = 0; i < frameskip; i++) {
             start_time = libgame_utime();
             system_frame(1);
