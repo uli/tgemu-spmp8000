@@ -28,7 +28,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "text.h"
-#include "file.h"
+#include "ui.h"
 
 extern display_dev_t *gDisplayDev;
 
