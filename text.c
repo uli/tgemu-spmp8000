@@ -105,7 +105,7 @@ render_asc:
                 break;
             }
         }
-        if (i == 13710) {
+        if (i == sizeof(hzk2uni) / 2) {
             codepoint = 1;
             goto render_asc;
         }
