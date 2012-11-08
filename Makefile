@@ -30,3 +30,6 @@ CFLAGS += -finstrument-functions -DPROFILE
 profile.o: profile.c
 	$(CC) -O2 -c $< -o $@
 endif
+
+hzktable.c: chinese/BG2UBG.KU chinese/big5.py
+	python chinese/big5.py chinese/BG2UBG.KU >hzktable.c

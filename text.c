@@ -4,11 +4,12 @@
 #include <unistd.h>
 #include <libgame.h>
 
-// #define CHINESE
+#define CHINESE
 
 static uint8_t *asc12_font = 0;
 #ifdef CHINESE
 static uint16_t *hzx12_font = 0;
+#include "hzktable.c"
 #endif
 
 int load_fonts(void)
@@ -73,9 +74,19 @@ render_asc:
         return 8;
     }
 #ifdef CHINESE
-    /* XXX: need to convert from Unicode to Big5 first! */
     else if (codepoint >= 0x4e00 && codepoint < 0x10000) {
-        codepoint -= 0x4e00;
+        /* convert unicode to Big5 codepoint */
+        for (i = 0; i < 13710; i++) {
+            if (hzk2uni[i] == codepoint) {
+                codepoint = i;
+                break;
+            }
+        }
+        if (i == 13710) {
+            codepoint = 1;
+            goto render_asc;
+        }
+
         for (i = 0; i < 12; i++) {
             uint16_t line = hzx12_font[codepoint * 12 + i];
             line = (line >> 8) | (line << 8);
