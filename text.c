@@ -99,7 +99,7 @@ render_asc:
 #ifdef CHINESE
     else if (codepoint >= 0x4e00 && codepoint < 0x10000) {
         /* convert unicode to Big5 codepoint */
-        for (i = 0; i < 13710; i++) {
+        for (i = 0; i < sizeof(hzk2uni) / 2; i++) {
             if (hzk2uni[i] == codepoint) {
                 codepoint = i;
                 break;

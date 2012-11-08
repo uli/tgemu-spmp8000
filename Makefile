@@ -31,5 +31,6 @@ profile.o: profile.c
 	$(CC) -O2 -c $< -o $@
 endif
 
+text.o: hzktable.c
 hzktable.c: chinese/BG2UBG.KU chinese/big5.py
 	python chinese/big5.py chinese/BG2UBG.KU >hzktable.c
