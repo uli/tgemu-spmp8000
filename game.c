@@ -232,7 +232,7 @@ int main()
         return 0;
     }
 
-    fs_fprintf(fd, "loading ROM\n");
+    fs_fprintf(fd, "loading ROM %s\n", romname);
     res = load_rom(romname, 0, 0);
     if (res != 1) {
         fs_fprintf(fd, "failed to load ROM %s: %d\n", romname, res);
