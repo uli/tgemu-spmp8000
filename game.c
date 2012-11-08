@@ -241,8 +241,16 @@ int main()
     // memset(gDisplayDev->getShadowBuffer(), 0, gDisplayDev->getWidth() *
     // gDisplayDev->getHeight() * 2);
     gDisplayDev->lcdClear();
-    char *msg = "TGEmu SPMP";
+    char *msg = "TGEmu";
     render_text(msg, (gDisplayDev->getWidth() - strlen(msg) * 8) / 2, 32);
+    msg = "NEC PC Engine Emulator";
+    render_text(msg, (gDisplayDev->getWidth() - strlen(msg) * 8) / 2, 48);
+    msg = "Original code: Charles MacDonald";
+    render_text(msg, (gDisplayDev->getWidth() - strlen(msg) * 8) / 2, 80);
+    msg = "SPMP8000 port: Ulrich Hecht";
+    render_text(msg, (gDisplayDev->getWidth() - strlen(msg) * 8) / 2, 96);
+    msg = "ulrich.hecht@gmail.com";
+    render_text(msg, (gDisplayDev->getWidth() - strlen(msg) * 8) / 2, 112);
     msg = "Press DOWN to map buttons";
     render_text(msg, (gDisplayDev->getWidth() - strlen(msg) * 8) / 2, 180);
     msg = "Press any other key to continue";
