@@ -147,9 +147,13 @@ void init_profile(void);
 void dump_profile(void);
 #endif
 
+uint16_t *original_shadow = 0;
 int my_exit(void)
 {
     system_shutdown();
+    /* re-enable double buffering */
+    if (original_shadow)
+        gDisplayDev->setShadowBuffer(original_shadow);
 #ifdef PROFILE
     dump_profile();
 #endif
@@ -277,6 +281,7 @@ int main()
     int avg_skip = 16666;
     
     /* Disable v-sync, we don't have that much time to waste. */
+    original_shadow = gDisplayDev->getShadowBuffer();
     gDisplayDev->setShadowBuffer(gDisplayDev->getFrameBuffer());
 
     while (1) {
