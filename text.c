@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <libgame.h>
+#include <string.h>
 
 #define CHINESE
 
@@ -130,6 +131,12 @@ render_asc:
 int render_text(const char *t, int x, int y)
 {
     return render_text_ex(gDisplayDev->getShadowBuffer(), gDisplayDev->getWidth(), t, x, y);
+}
+
+int render_text_centered(const char *t, int y)
+{
+    /* XXX: doesn't work correctly with double-width characters */
+    return render_text(t, (gDisplayDev->getWidth() - strlen(t) * 8) / 2, y);
 }
 
 int render_text_ex(uint16_t *buf, int width, const char *t, int x, int y)

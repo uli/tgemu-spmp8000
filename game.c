@@ -241,20 +241,13 @@ int main()
     // memset(gDisplayDev->getShadowBuffer(), 0, gDisplayDev->getWidth() *
     // gDisplayDev->getHeight() * 2);
     gDisplayDev->lcdClear();
-    char *msg = "TGEmu";
-    render_text(msg, (gDisplayDev->getWidth() - strlen(msg) * 8) / 2, 32);
-    msg = "NEC PC Engine Emulator";
-    render_text(msg, (gDisplayDev->getWidth() - strlen(msg) * 8) / 2, 48);
-    msg = "Original code: Charles MacDonald";
-    render_text(msg, (gDisplayDev->getWidth() - strlen(msg) * 8) / 2, 80);
-    msg = "SPMP8000 port: Ulrich Hecht";
-    render_text(msg, (gDisplayDev->getWidth() - strlen(msg) * 8) / 2, 96);
-    msg = "ulrich.hecht@gmail.com";
-    render_text(msg, (gDisplayDev->getWidth() - strlen(msg) * 8) / 2, 112);
-    msg = "Press DOWN to map buttons";
-    render_text(msg, (gDisplayDev->getWidth() - strlen(msg) * 8) / 2, 180);
-    msg = "Press any other key to continue";
-    render_text(msg, (gDisplayDev->getWidth() - strlen(msg) * 8) / 2, 200);
+    render_text_centered("TGEmu", 32);
+    render_text_centered("NEC PC Engine Emulator", 48);
+    render_text_centered("Original code: Charles MacDonald", 80);
+    render_text_centered("SPMP8000 port: Ulrich Hecht", 96);
+    render_text_centered("ulrich.hecht@gmail.com", 112);
+    render_text_centered("Press DOWN to map buttons", 180);
+    render_text_centered("Press any other key to continue", 200);
     cache_sync();
     gDisplayDev->lcdFlip();
     key_data_t keys = wait_for_key();
