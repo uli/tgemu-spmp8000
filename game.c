@@ -145,13 +145,16 @@ void update_input(void)
 #ifdef PROFILE
 void init_profile(void);
 void dump_profile(void);
+#endif
 
-int profile_exit(void)
+int my_exit(void)
 {
+    system_shutdown();
+#ifdef PROFILE
     dump_profile();
+#endif
     return NativeGE_gameExit();
 }
-#endif
 
 int main()
 {
@@ -159,11 +162,12 @@ int main()
 
 #ifdef PROFILE
     init_profile();
-    g_stEmuAPIs->exit = profile_exit;
 #endif
-    
+
     // initialize the game api
     libgame_init();
+
+    g_stEmuAPIs->exit = my_exit;
 
     /* Turn off OS debug output. It is enabled by default on some systems
        and causes horrible slowdowns .*/
