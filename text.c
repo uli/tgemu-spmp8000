@@ -175,6 +175,8 @@ int render_text_ex(uint16_t *buf, int width, const char *t, int x, int y)
             text++;
         }
         x += draw_character_ex(buf, width, codepoint, x, y);
+        if (x >= width - 8)
+            break;
     }
     return x - old_x;
 }
