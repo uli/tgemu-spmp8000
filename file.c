@@ -182,7 +182,8 @@ restart:
         /* Wait for single key press. */
         while (!(key = emuIfKeyGetInput(keymap)) || bit_count(key) != 1) {}
         if (key & keymap->scancode[EMU_KEY_DOWN]) {
-            render_text("skipped", gDisplayDev->getWidth() - 10 - 7 * 8, y);
+            keymap->scancode[kp->index] = 0;
+            render_text("skipped", gDisplayDev->getWidth() - 10 - 8 * 8, y);
             continue;
         }
         sprintf(buf, "%9d", key);
