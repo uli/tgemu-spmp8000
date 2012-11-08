@@ -201,7 +201,9 @@ restart:
             break;
     }
     if (memcmp(keymap, &save, sizeof(keymap_t))) {
-        FILE *fp = fopen("tgemu.map", "wb");
+        FILE *fp = fopen("/fat20a2/hda2/GAME/tgemu.map", "wb");
+        if (!fp)
+            fp = fopen("tgemu.map", "wb");
         if (fp) {
             fwrite(&keymap->scancode[4], sizeof(uint32_t), 16, fp);
             fclose(fp);
@@ -211,7 +213,9 @@ restart:
 
 void load_buttons(keymap_t *keymap)
 {
-    FILE *fp = fopen("tgemu.map", "rb");
+    FILE *fp = fopen("/fat20a2/hda2/GAME/tgemu.map", "rb");
+    if (!fp)
+        fp = fopen("tgemu.map", "rb");
     if (fp) {
         fread(&keymap->scancode[4], sizeof(uint32_t), 16, fp);
         fclose(fp);
