@@ -47,6 +47,8 @@ static void invert(uint16_t *start, int size)
 
 int select_file(const char *start, const char *extension, char **file)
 {
+    char wd[256];
+    getcwd(wd, 256);
     struct _ecos_dirent *dents;
     struct _ecos_stat *stats;
     dents = malloc(sizeof(struct _ecos_dirent) * 10);
@@ -128,10 +130,14 @@ reload_dir:
                 break;
         }
     }
-    char *filename = strdup(dents[current_entry].d_name);
+    char buf[256];
+    getcwd(buf, 256);
+    char *filename = malloc(strlen(dents[current_entry].d_name) + 1 + strlen(buf) + 1);
+    sprintf(filename, "%s/%s", buf, dents[current_entry].d_name);
     *file = filename;
     free(dents);
     free(stats);
+    _ecos_chdir(wd);
     return 0;
 }
 
