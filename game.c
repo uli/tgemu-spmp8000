@@ -239,8 +239,7 @@ int main()
     if (res < 0) {
         fs_fprintf(fd, "load_fonts failed (%d)\n", res);
     }
-    // memset(gDisplayDev->getShadowBuffer(), 0, gDisplayDev->getWidth() *
-    // gDisplayDev->getHeight() * 2);
+
     gDisplayDev->lcdClear();
     text_set_font_size(FONT_SIZE_16);
     render_text_centered("TGEmu", 32);
@@ -253,12 +252,13 @@ int main()
     render_text_centered("Press any other key to continue", 200);
     cache_sync();
     gDisplayDev->lcdFlip();
+
     key_data_t keys = wait_for_key();
     if (keys.key2 & GE_KEY_DOWN)
         map_buttons(&keymap);
 
     char *romname = 0;
-    if ((res = select_file(NULL, "pce|gz|zip", &romname)) < 0) {
+    if ((res = select_file(NULL, "pce|gz|zip", &romname, FONT_SIZE_16)) < 0) {
         fs_fprintf(fd, "select_file() %d\n", res);
         NativeGE_fsClose(fd);
         return 0;

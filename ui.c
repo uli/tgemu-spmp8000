@@ -66,7 +66,7 @@ static void invert(uint16_t *start, int size)
     }
 }
 
-int select_file(const char *start, const char *extension, char **file)
+int select_file(const char *start, const char *extension, char **file, int font_size)
 {
     char wd[256];
     getcwd(wd, 256);
@@ -109,10 +109,13 @@ reload_dir:
 
     int screen_width = gDisplayDev->getWidth();
     int screen_height = gDisplayDev->getHeight();
-    int max_entries_displayed = screen_height / 12;
+    int max_entries_displayed = screen_height / font_size;
     int current_top = 0;
     int current_entry = 0;
 
+    int old_size = text_get_font_size();
+    text_set_font_size(font_size);
+    
     for (;;) {
         int i;
         uint16_t *fb = gDisplayDev->getShadowBuffer();
@@ -120,15 +123,15 @@ reload_dir:
         for (i = current_top;
              i < current_top + max_entries_displayed && i < current_top + dent_count; i++) {
             if (_ECOS_S_ISDIR(stats[i].st_mode)) {
-                int cw = draw_character('[', 0, (i - current_top) * 12);
-                cw += render_text(dents[i].d_name, cw, (i - current_top) * 12);
-                draw_character(']', cw, (i - current_top) * 12);
+                int cw = draw_character('[', 0, (i - current_top) * font_size);
+                cw += render_text(dents[i].d_name, cw, (i - current_top) * font_size);
+                draw_character(']', cw, (i - current_top) * font_size);
             }
             else {
-                render_text(dents[i].d_name, 0, (i - current_top) * 12);
+                render_text(dents[i].d_name, 0, (i - current_top) * font_size);
             }
         }
-        invert(fb + (current_entry - current_top) * screen_width * 12, 12 * screen_width);
+        invert(fb + (current_entry - current_top) * screen_width * font_size, font_size * screen_width);
         cache_sync();
         gDisplayDev->lcdFlip();
         key_data_t keys = wait_for_key();
@@ -139,7 +142,7 @@ reload_dir:
         }
         else if ((keys.key2 & GE_KEY_DOWN) && current_entry < dent_count - 1) {
             current_entry++;
-            if ((current_entry - current_top + 1) * 12 > screen_height)
+            if ((current_entry - current_top + 1) * font_size > screen_height)
                 current_top++;
         }
         else if (keys.key2 & GE_KEY_O) {
@@ -159,6 +162,7 @@ reload_dir:
     free(dents);
     free(stats);
     _ecos_chdir(wd);
+    text_set_font_size(old_size);
     return 0;
 }
 
