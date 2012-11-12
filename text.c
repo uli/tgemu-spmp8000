@@ -90,14 +90,18 @@ int load_fonts(void)
 
 void free_fonts(void)
 {
-    free(asc12_font);
+    if (asc12_font)
+        free(asc12_font);
     asc12_font = 0;
-    free(asc16_font);
+    if (asc16_font)
+        free(asc16_font);
     asc16_font = 0;
 #ifdef CHINESE
-    free(hzx12_font);
+    if (hzx12_font)
+        free(hzx12_font);
     hzx12_font = 0;
-    free(hzx16_font);
+    if (hzx16_font)
+        free(hzx16_font);
     hzx16_font = 0;
 #endif
 }
