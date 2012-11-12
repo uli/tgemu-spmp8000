@@ -177,6 +177,7 @@ int my_exit(void)
 #ifdef PROFILE
     dump_profile();
 #endif
+    free_fonts();
     return NativeGE_gameExit();
 }
 
@@ -381,7 +382,7 @@ int main()
 #endif
     }
 
-    free_fonts();
+    /* never reached */
     return 0;
 }
 
