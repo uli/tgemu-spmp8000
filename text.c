@@ -49,7 +49,7 @@ struct sunplus_font {
 FILE *songti_font = 0;
 struct sunplus_font sp;
 
-int load_fonts(void)
+int text_load_fonts(void)
 {
     int fd = open("/Rom/mw/fonts/CHINESE/ASC12", O_RDONLY);
     if (!fd) {
@@ -110,7 +110,7 @@ int load_fonts(void)
     return 0;
 }
 
-void free_fonts(void)
+void text_free_fonts(void)
 {
     if (asc12_font)
         free(asc12_font);
@@ -147,13 +147,13 @@ void text_set_font_face(int face)
     font_face = face;
 }
 
-int draw_character(uint32_t codepoint, int x, int y)
+int text_draw_character(uint32_t codepoint, int x, int y)
 {
-    return draw_character_ex(gDisplayDev->getShadowBuffer(),
+    return text_draw_character_ex(gDisplayDev->getShadowBuffer(),
                              gDisplayDev->getWidth(), codepoint, x, y);
 }
 
-int draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, int y)
+int text_draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, int y)
 {
     uint16_t *fb = buf + width * y + x;
     int i, j;
@@ -234,18 +234,18 @@ int draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, int y
 #endif
 }
 
-int render_text(const char *t, int x, int y)
+int text_render(const char *t, int x, int y)
 {
-    return render_text_ex(gDisplayDev->getShadowBuffer(), gDisplayDev->getWidth(), t, x, y);
+    return text_render_ex(gDisplayDev->getShadowBuffer(), gDisplayDev->getWidth(), t, x, y);
 }
 
-int render_text_centered(const char *t, int y)
+int text_render_centered(const char *t, int y)
 {
     /* XXX: doesn't work correctly with double-width characters */
-    return render_text(t, (gDisplayDev->getWidth() - strlen(t) * 8) / 2, y);
+    return text_render(t, (gDisplayDev->getWidth() - strlen(t) * 8) / 2, y);
 }
 
-int render_text_ex(uint16_t *buf, int width, const char *t, int x, int y)
+int text_render_ex(uint16_t *buf, int width, const char *t, int x, int y)
 {
     int old_x = x;
     const uint8_t *text = (uint8_t *)t;
@@ -280,7 +280,7 @@ int render_text_ex(uint16_t *buf, int width, const char *t, int x, int y)
             codepoint = *text;
             text++;
         }
-        x += draw_character_ex(buf, width, codepoint, x, y);
+        x += text_draw_character_ex(buf, width, codepoint, x, y);
         if (x >= width - 8)
             break;
     }

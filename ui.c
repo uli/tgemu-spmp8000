@@ -123,12 +123,12 @@ reload_dir:
         for (i = current_top;
              i < current_top + max_entries_displayed && i < current_top + dent_count; i++) {
             if (_ECOS_S_ISDIR(stats[i].st_mode)) {
-                int cw = draw_character('[', 0, (i - current_top) * font_size);
-                cw += render_text(dents[i].d_name, cw, (i - current_top) * font_size);
-                draw_character(']', cw, (i - current_top) * font_size);
+                int cw = text_draw_character('[', 0, (i - current_top) * font_size);
+                cw += text_render(dents[i].d_name, cw, (i - current_top) * font_size);
+                text_draw_character(']', cw, (i - current_top) * font_size);
             }
             else {
-                render_text(dents[i].d_name, 0, (i - current_top) * font_size);
+                text_render(dents[i].d_name, 0, (i - current_top) * font_size);
             }
         }
         invert(fb + (current_entry - current_top) * screen_width * font_size, font_size * screen_width);
@@ -181,7 +181,7 @@ void map_buttons(keymap_t *keymap)
     keymap_t save = *keymap;
 restart:
     gDisplayDev->lcdClear();
-    render_text("Press button for: (DOWN to skip)", 10, 10);
+    text_render("Press button for: (DOWN to skip)", 10, 10);
     struct {
         char *name;
         uint32_t index;
@@ -199,7 +199,7 @@ restart:
     int key;
     char buf[10];
     for (kp = keys; kp->name; kp++, y += 10) {
-        render_text(kp->name, 10, y);
+        text_render(kp->name, 10, y);
         cache_sync();
         gDisplayDev->lcdFlip();
         /* Wait for keypad silence. */
@@ -208,14 +208,14 @@ restart:
         while (!(key = emuIfKeyGetInput(keymap)) || bit_count(key) != 1) {}
         if (key & keymap->scancode[EMU_KEY_DOWN]) {
             keymap->scancode[kp->index] = 0;
-            render_text("skipped", gDisplayDev->getWidth() - 10 - 8 * 8, y);
+            text_render("skipped", gDisplayDev->getWidth() - 10 - 8 * 8, y);
             continue;
         }
         sprintf(buf, "%9d", key);
-        render_text(buf, gDisplayDev->getWidth() - 10 - 10*8, y);
+        text_render(buf, gDisplayDev->getWidth() - 10 - 10*8, y);
         keymap->scancode[kp->index] = key;
     }
-    render_text("Press UP to save, DOWN to start over.", 10, y + 20);
+    text_render("Press UP to save, DOWN to start over.", 10, y + 20);
     cache_sync();
     gDisplayDev->lcdFlip();
     for (;;) {

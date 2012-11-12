@@ -177,7 +177,7 @@ int my_exit(void)
 #ifdef PROFILE
     dump_profile();
 #endif
-    free_fonts();
+    text_free_fonts();
     return NativeGE_gameExit();
 }
 
@@ -235,21 +235,21 @@ int main()
         fs_fprintf(fd, "key %d scancode %08x\n", i, keymap.scancode[i]);
     load_buttons(&keymap);
 
-    res = load_fonts();
+    res = text_load_fonts();
     if (res < 0) {
-        fs_fprintf(fd, "load_fonts failed (%d)\n", res);
+        fs_fprintf(fd, "text_load_fonts failed (%d)\n", res);
     }
 
     gDisplayDev->lcdClear();
     text_set_font_size(FONT_SIZE_16);
-    render_text_centered("TGEmu", 32);
+    text_render_centered("TGEmu", 32);
     text_set_font_size(FONT_SIZE_12);
-    render_text_centered("NEC PC Engine Emulator", 52);
-    render_text_centered("Original code: Charles MacDonald", 80);
-    render_text_centered("SPMP8000 port: Ulrich Hecht", 96);
-    render_text_centered("ulrich.hecht@gmail.com", 112);
-    render_text_centered("Press DOWN to map buttons", 180);
-    render_text_centered("Press any other key to continue", 200);
+    text_render_centered("NEC PC Engine Emulator", 52);
+    text_render_centered("Original code: Charles MacDonald", 80);
+    text_render_centered("SPMP8000 port: Ulrich Hecht", 96);
+    text_render_centered("ulrich.hecht@gmail.com", 112);
+    text_render_centered("Press DOWN to map buttons", 180);
+    text_render_centered("Press any other key to continue", 200);
     cache_sync();
     gDisplayDev->lcdFlip();
 
@@ -331,7 +331,7 @@ int main()
         }
 
         if (show_timing) {
-            render_text_ex((uint16_t *)bitmap.data, bitmap.pitch / 2, fps, bitmap.viewport.x, bitmap.viewport.y);
+            text_render_ex((uint16_t *)bitmap.data, bitmap.pitch / 2, fps, bitmap.viewport.x, bitmap.viewport.y);
         }
         if (!widescreen) {
             /* In non-widescreen mode, the black bars to the left and right
