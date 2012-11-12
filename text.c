@@ -111,6 +111,11 @@ void text_set_font_size(int fs)
 {
     font_size = fs;
 }
+int text_get_font_size(void)
+{
+    return font_size;
+}
+
 
 int draw_character(uint32_t codepoint, int x, int y)
 {
