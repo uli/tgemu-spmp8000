@@ -30,8 +30,10 @@
 #define CHINESE
 
 static uint8_t *asc12_font = 0;
+static uint8_t *asc16_font = 0;
 #ifdef CHINESE
 static uint16_t *hzx12_font = 0;
+static uint16_t *hzx16_font = 0;
 #include "hzktable.c"
 #endif
 
@@ -49,6 +51,17 @@ int load_fonts(void)
     }
     close(fd);
 
+    fd = open("/Rom/mw/fonts/CHINESE/ASC16", O_RDONLY);
+    if (!fd) {
+        return -1;
+    }
+    fstat(fd, &st);
+    asc16_font = malloc(st.st_size);
+    if (!asc16_font || read(fd, asc16_font, st.st_size) != st.st_size) {
+        return -2;
+    }
+    close(fd);
+
 #ifdef CHINESE
     fd = open("/Rom/mw/fonts/CHINESE/HZX12", O_RDONLY);
     if (!fd) {
@@ -60,6 +73,17 @@ int load_fonts(void)
         return -4;
     }
     close(fd);
+
+    fd = open("/Rom/mw/fonts/CHINESE/HZX16", O_RDONLY);
+    if (!fd) {
+        return -3;
+    }
+    fstat(fd, &st);
+    hzx16_font = malloc(st.st_size);
+    if (!hzx16_font || read(fd, hzx16_font, st.st_size) != st.st_size) {
+        return -4;
+    }
+    close(fd);
 #endif
     return 0;
 }
@@ -68,10 +92,20 @@ void free_fonts(void)
 {
     free(asc12_font);
     asc12_font = 0;
+    free(asc16_font);
+    asc16_font = 0;
 #ifdef CHINESE
     free(hzx12_font);
     hzx12_font = 0;
+    free(hzx16_font);
+    hzx16_font = 0;
 #endif
+}
+
+int font_size = FONT_SIZE_12;
+void text_set_font_size(int fs)
+{
+    font_size = fs;
 }
 
 int draw_character(uint32_t codepoint, int x, int y)
@@ -84,10 +118,26 @@ int draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, int y
 {
     uint16_t *fb = buf + width * y + x;
     int i, j;
+    uint8_t *asc_font;
+    uint16_t *hzx_font;
+    
+    switch (font_size) {
+        case FONT_SIZE_12:
+            asc_font = asc12_font;
+            hzx_font = hzx12_font;
+            break;
+        case FONT_SIZE_16:
+            asc_font = asc16_font;
+            hzx_font = hzx16_font;
+            break;
+        default:
+            return -1;
+    }
+
     if (codepoint < 256) {
 render_asc:
-        for (i = 0; i < 12; i++) {
-            uint8_t line = asc12_font[codepoint * 12 + i];
+        for (i = 0; i < font_size; i++) {
+            uint8_t line = asc_font[codepoint * font_size + i];
             for (j = 0; j < 8; j++) {
                 fb[j] = (line & 0x80) ? 0xffff : 0;
                 line <<= 1;
@@ -110,8 +160,8 @@ render_asc:
             goto render_asc;
         }
 
-        for (i = 0; i < 12; i++) {
-            uint16_t line = hzx12_font[codepoint * 12 + i];
+        for (i = 0; i < font_size; i++) {
+            uint16_t line = hzx_font[codepoint * font_size + i];
             line = (line >> 8) | (line << 8);
             for (j = 0; j < 16; j++) {
                 fb[j] = (line & 0x8000) ? 0xffff : 0;

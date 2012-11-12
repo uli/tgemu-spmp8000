@@ -241,8 +241,10 @@ int main()
     // memset(gDisplayDev->getShadowBuffer(), 0, gDisplayDev->getWidth() *
     // gDisplayDev->getHeight() * 2);
     gDisplayDev->lcdClear();
+    text_set_font_size(FONT_SIZE_16);
     render_text_centered("TGEmu", 32);
-    render_text_centered("NEC PC Engine Emulator", 48);
+    text_set_font_size(FONT_SIZE_12);
+    render_text_centered("NEC PC Engine Emulator", 52);
     render_text_centered("Original code: Charles MacDonald", 80);
     render_text_centered("SPMP8000 port: Ulrich Hecht", 96);
     render_text_centered("ulrich.hecht@gmail.com", 112);
