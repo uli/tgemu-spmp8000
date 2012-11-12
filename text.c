@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <libgame.h>
 #include <string.h>
+#include <stdio.h>
 
 #define CHINESE
 
@@ -36,6 +37,17 @@ static uint16_t *hzx12_font = 0;
 static uint16_t *hzx16_font = 0;
 #include "hzktable.c"
 #endif
+
+struct sunplus_font {
+    uint8_t _pad1[0x10];
+    uint32_t glyph_start;
+    uint32_t _pad2;
+    uint32_t glyph_offset;
+    uint32_t _pad3[2];
+    uint32_t glyph_bytes;
+};
+FILE *songti_font = 0;
+struct sunplus_font sp;
 
 int load_fonts(void)
 {
@@ -63,6 +75,7 @@ int load_fonts(void)
     close(fd);
 
 #ifdef CHINESE
+    /* XXX: Don't load these fonts until HZX font face is requested. */
     fd = open("/Rom/mw/fonts/CHINESE/HZX12", O_RDONLY);
     if (!fd) {
         return -3;
@@ -85,6 +98,15 @@ int load_fonts(void)
     }
     close(fd);
 #endif
+    songti_font = fopen("/Rom/mw/fonts/SUNPLUS/SONGTI.FONT", "r");
+    if (!songti_font)
+        return -5;
+    if (fread(&sp, sizeof(sp), 1, songti_font) != 1) {
+        fclose(songti_font);
+        songti_font = 0;
+        return -6;
+    }
+
     return 0;
 }
 
@@ -104,9 +126,13 @@ void free_fonts(void)
         free(hzx16_font);
     hzx16_font = 0;
 #endif
+    if (songti_font)
+        fclose(songti_font);
 }
 
 int font_size = FONT_SIZE_12;
+int font_face = FONT_FACE_SONGTI;
+
 void text_set_font_size(int fs)
 {
     font_size = fs;
@@ -116,6 +142,10 @@ int text_get_font_size(void)
     return font_size;
 }
 
+void text_set_font_face(int face)
+{
+    font_face = face;
+}
 
 int draw_character(uint32_t codepoint, int x, int y)
 {
@@ -128,25 +158,58 @@ int draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, int y
     uint16_t *fb = buf + width * y + x;
     int i, j;
     uint8_t *asc_font;
+    int asc_step;
     uint16_t *hzx_font;
+    uint16_t sunplus_char[sp.glyph_bytes / 2];
+    int chinese = 0;
     
+    if (codepoint >= 0x4e00 && codepoint < 0x10000) {
+        /* XXX: Song Ti is a proper unicode font, so we cannot assume that
+           every non-ASCII character is double-width. */
+        chinese = 1;
+        if (font_size == FONT_SIZE_12 || font_face == FONT_FACE_HZX) {
+            /* convert unicode to Big5 codepoint */
+            for (i = 0; i < (int)sizeof(hzk2uni) / 2; i++) {
+                if (hzk2uni[i] == codepoint) {
+                    codepoint = i;
+                    chinese = 1;
+                    break;
+                }
+            }
+            if (i == sizeof(hzk2uni) / 2) {
+                codepoint = 1;
+                chinese = 0;
+            }
+        }
+    }
+
     switch (font_size) {
         case FONT_SIZE_12:
-            asc_font = asc12_font;
-            hzx_font = hzx12_font;
+            asc_font = &asc12_font[codepoint * font_size];
+            asc_step = 1;
+            hzx_font = &hzx12_font[codepoint * font_size];
             break;
         case FONT_SIZE_16:
-            asc_font = asc16_font;
-            hzx_font = hzx16_font;
+            if (font_face == FONT_FACE_HZX) {
+                asc_font = &asc16_font[codepoint * font_size];
+                asc_step = 1;
+                hzx_font = &hzx16_font[codepoint * font_size];
+            }
+            else {
+                fseek(songti_font, (codepoint - sp.glyph_offset) * sp.glyph_bytes + sp.glyph_start, SEEK_SET);
+                fread(sunplus_char, sp.glyph_bytes, 1, songti_font);
+                asc_font = (uint8_t *)sunplus_char;
+                asc_step = 2;
+                hzx_font = (uint16_t *)sunplus_char;
+            }
             break;
         default:
             return -1;
     }
 
-    if (codepoint < 256) {
-render_asc:
+    if (!chinese) {
         for (i = 0; i < font_size; i++) {
-            uint8_t line = asc_font[codepoint * font_size + i];
+            uint8_t line = asc_font[i * asc_step];
             for (j = 0; j < 8; j++) {
                 fb[j] = (line & 0x80) ? 0xffff : 0;
                 line <<= 1;
@@ -156,21 +219,9 @@ render_asc:
         return 8;
     }
 #ifdef CHINESE
-    else if (codepoint >= 0x4e00 && codepoint < 0x10000) {
-        /* convert unicode to Big5 codepoint */
-        for (i = 0; i < sizeof(hzk2uni) / 2; i++) {
-            if (hzk2uni[i] == codepoint) {
-                codepoint = i;
-                break;
-            }
-        }
-        if (i == sizeof(hzk2uni) / 2) {
-            codepoint = 1;
-            goto render_asc;
-        }
-
+    else {
         for (i = 0; i < font_size; i++) {
-            uint16_t line = hzx_font[codepoint * font_size + i];
+            uint16_t line = hzx_font[i];
             line = (line >> 8) | (line << 8);
             for (j = 0; j < 16; j++) {
                 fb[j] = (line & 0x8000) ? 0xffff : 0;
@@ -181,10 +232,6 @@ render_asc:
         return 16;
     }
 #endif
-    else {
-        codepoint = 1;
-        goto render_asc;
-    }
 }
 
 int render_text(const char *t, int x, int y)
