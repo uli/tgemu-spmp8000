@@ -124,7 +124,7 @@ static int load_hzx_font(int font_size)
     return 0;
 }
 
-int text_load_fonts(void)
+int text_init(void)
 {
     int fd = open("/Rom/mw/fonts/CHINESE/ASC12", O_RDONLY);
     if (!fd)
@@ -148,7 +148,7 @@ int text_load_fonts(void)
     return 0;
 }
 
-void text_free_fonts(void)
+void text_free(void)
 {
     if (asc12_font)
         free(asc12_font);

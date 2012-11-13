@@ -177,7 +177,7 @@ int my_exit(void)
 #ifdef PROFILE
     dump_profile();
 #endif
-    text_free_fonts();
+    text_free();
     return NativeGE_gameExit();
 }
 
@@ -235,9 +235,9 @@ int main()
         fs_fprintf(fd, "key %d scancode %08x\n", i, keymap.scancode[i]);
     load_buttons(&keymap);
 
-    res = text_load_fonts();
+    res = text_init();
     if (res < 0) {
-        fs_fprintf(fd, "text_load_fonts failed (%d)\n", res);
+        fs_fprintf(fd, "text_init() failed (%d)\n", res);
     }
 
     gDisplayDev->lcdClear();

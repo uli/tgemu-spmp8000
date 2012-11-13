@@ -9,8 +9,8 @@
 #define FONT_FACE_XINSONG 3
 #define FONT_FACE_MAX 4
 
-int text_load_fonts(void);
-void text_free_fonts(void);
+int text_init(void);
+void text_free(void);
 int text_draw_character(uint32_t codepoint, int x, int y);
 int text_draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, int y);
 int text_render(const char *t, int x, int y);
