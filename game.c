@@ -40,15 +40,19 @@
 
 emu_sound_params_t sp;
 #define SOUNDBUF_FRAMES 16
-uint8_t sound_ring[735 * SOUNDBUF_FRAMES];
+#define SOUND_CHANNELS 2
+#define SOUND_RATE 44010
+#define SOUND_BUFFER_SIZE (SOUND_RATE / 60)
+uint16_t sound_ring[SOUND_BUFFER_SIZE * SOUND_CHANNELS * SOUNDBUF_FRAMES];
 int sound_ring_read = 0;
 int sound_ring_write = 0;
 void sync_sound(void)
 {
     if (sound_ring_write >= sound_ring_read + 2 ||
         (sound_ring_write == 0 && sound_ring_read == SOUNDBUF_FRAMES - 2)) {
-        sp.buf = &sound_ring[sound_ring_read * snd.buffer_size];
-        sp.buf_size = 735 * 2;
+        sp.buf = (uint8_t *)&sound_ring[sound_ring_read * SOUND_BUFFER_SIZE * SOUND_CHANNELS];
+        /* two frames, two channels, two bytes per sample */
+        sp.buf_size = SOUND_BUFFER_SIZE * 2 * SOUND_CHANNELS * 2;
         /* emuIfSoundPlay() can block, so we must exclude it from the
            calculated frame time used to tune frameskip. */
         emuIfSoundPlay(&sp);
@@ -61,8 +65,10 @@ void update_sound(void)
     if (!snd.enabled)
         return;
     int i;
-    for (i = 0; i < snd.buffer_size; i++) {
-        sound_ring[i + sound_ring_write * snd.buffer_size] = snd.buffer[1][i] >> 8;
+    for (i = 0; i < SOUND_BUFFER_SIZE; i++) {
+        int pos = i * SOUND_CHANNELS + sound_ring_write * snd.buffer_size * SOUND_CHANNELS;
+        sound_ring[pos] = snd.buffer[0][i];
+        sound_ring[pos + 1] = snd.buffer[1][i];
     }
     sound_ring_write = (sound_ring_write + 1) % SOUNDBUF_FRAMES;
     sync_sound();
@@ -216,10 +222,10 @@ int main()
     fs_fprintf(fd, "ARM frequency %d\n", GetArmCoreFreq());
     fs_fprintf(fd, "system ID %d\n", libgame_system_id);
 
-    sp.rate = 22050;
-    sp.channels = 1;            // 2;
-    sp.depth = 0;
-    sp.callback = 0;
+    sp.rate = SOUND_RATE;
+    sp.channels = SOUND_CHANNELS;
+    sp.depth = 0;	/* 0 seems to mean 16 bits */
+    sp.callback = 0;	/* not used for native games, AFAIK */
     res = emuIfSoundInit(&sp);
     fs_fprintf(fd, "emuIfSoundInit returns %d, sp.rate %d\n", res, sp.rate);
 
@@ -292,7 +298,7 @@ int main()
     bitmap.viewport.changed = 0;
 
     fs_fprintf(fd, "system_init\n");
-    system_init(44100);
+    system_init(SOUND_RATE);
     fs_fprintf(fd, "system_reset\n");
     system_reset();
     fs_fprintf(fd, "snd.enabled %d, buffer size %d\n", snd.enabled, snd.buffer_size);
