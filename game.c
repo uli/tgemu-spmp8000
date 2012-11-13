@@ -370,11 +370,7 @@ int main()
             start_time = libgame_utime();
             system_frame(1);
             /* Skipping input is not a good idea, makes the game less
-               less responsive. The A1000 gets _very_ slow when
-               you call NativeGE_getKeyInput4Ntv() too often. We try
-               to avoid using it. */
-            /* XXX: Reduce update frequency if native input is not
-               available. */
+               responsive. */
             update_input();
             avg_skip = (avg_skip * 15 + libgame_utime() - start_time) / 16;
             update_sound();
