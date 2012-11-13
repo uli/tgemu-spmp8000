@@ -26,11 +26,11 @@
 #include <sys/stat.h>
 #include <stdio.h>
 
-key_data_t wait_for_key(void)
+ge_key_data_t wait_for_key(void)
 {
     static int auto_repeat = 0;
-    static key_data_t okeys;
-    key_data_t keys;
+    static ge_key_data_t okeys;
+    ge_key_data_t keys;
     NativeGE_getKeyInput4Ntv(&keys);
     uint32_t last_press_tick = NativeGE_getTime();
     while (auto_repeat && keys.key2 == okeys.key2 && NativeGE_getTime() < last_press_tick + 100) {
@@ -55,7 +55,6 @@ key_data_t wait_for_key(void)
     okeys = keys;
     return keys;
 }
-extern key_data_t wait_for_key(void);
 
 static void invert(uint16_t *start, int size)
 {
@@ -133,8 +132,8 @@ reload_dir:
         }
         invert(fb + (current_entry - current_top) * screen_width * font_size, font_size * screen_width);
         cache_sync();
-        gDisplayDev->lcdFlip();
-        key_data_t keys = wait_for_key();
+        gDisplayDev->flip();
+        ge_key_data_t keys = wait_for_key();
         if ((keys.key2 & GE_KEY_UP) && current_entry > 0) {
             current_entry--;
             if (current_entry < current_top)
@@ -176,11 +175,11 @@ static int bit_count(uint32_t val)
     return ret;
 }
 
-void map_buttons(keymap_t *keymap)
+void map_buttons(emu_keymap_t *keymap)
 {
-    keymap_t save = *keymap;
+    emu_keymap_t save = *keymap;
 restart:
-    gDisplayDev->lcdClear();
+    gDisplayDev->clear();
     text_render("Press button for: (DOWN to skip)", 10, 10);
     struct {
         char *name;
@@ -201,7 +200,7 @@ restart:
     for (kp = keys; kp->name; kp++, y += 10) {
         text_render(kp->name, 10, y);
         cache_sync();
-        gDisplayDev->lcdFlip();
+        gDisplayDev->flip();
         /* Wait for keypad silence. */
         while (emuIfKeyGetInput(keymap)) {}
         /* Wait for single key press. */
@@ -217,15 +216,15 @@ restart:
     }
     text_render("Press UP to save, DOWN to start over.", 10, y + 20);
     cache_sync();
-    gDisplayDev->lcdFlip();
+    gDisplayDev->flip();
     for (;;) {
-        key_data_t keys = wait_for_key();
+        ge_key_data_t keys = wait_for_key();
         if (keys.key2 & GE_KEY_DOWN)
             goto restart;
         else if (keys.key2 & GE_KEY_UP)
             break;
     }
-    if (memcmp(keymap, &save, sizeof(keymap_t))) {
+    if (memcmp(keymap, &save, sizeof(emu_keymap_t))) {
         FILE *fp = fopen("/fat20a2/hda2/GAME/tgemu.map", "wb");
         if (!fp)
             fp = fopen("tgemu.map", "wb");
@@ -236,7 +235,7 @@ restart:
     }
 }
 
-void load_buttons(keymap_t *keymap)
+void load_buttons(emu_keymap_t *keymap)
 {
     FILE *fp = fopen("/fat20a2/hda2/GAME/tgemu.map", "rb");
     if (!fp)

@@ -23,14 +23,11 @@
 #include <string.h>
 
 #include "libgame.h"
-#include "gfx_types.h"
 #include "shared.h"
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "text.h"
 #include "ui.h"
-
-extern display_dev_t *gDisplayDev;
 
 #define fs_fprintf(fd, x...) { \
   char buf[256]; int _res; \
@@ -41,7 +38,7 @@ extern display_dev_t *gDisplayDev;
 #define MAX_FRAMESKIP 8
 #define SHOW_KEYS
 
-sound_params_t sp;
+emu_sound_params_t sp;
 #define SOUNDBUF_FRAMES 16
 uint8_t sound_ring[735 * SOUNDBUF_FRAMES];
 int sound_ring_read = 0;
@@ -71,7 +68,7 @@ void update_sound(void)
     sync_sound();
 }
 
-graph_params_t gp;
+emu_graph_params_t gp;
 #define VISIBLEWIDTH 512	/* visible horizontal size of source bitmap */
 #define BMWIDTH (32 + VISIBLEWIDTH + 32)	/* total horizontal size of source bitmap */
 
@@ -79,7 +76,7 @@ int show_timing = 0;
 int widescreen = 1;
 
 uint32_t nkeys;
-keymap_t keymap;
+emu_keymap_t keymap;
 
 void update_input(void)
 {
@@ -89,7 +86,7 @@ void update_input(void)
 
     input.pad[0] = 0;
 
-    key_data_t keys;
+    ge_key_data_t keys;
     NativeGE_getKeyInput4Ntv(&keys);
     
     nkeys = emuIfKeyGetInput(&keymap);
@@ -168,8 +165,9 @@ void dump_profile(void);
 #endif
 
 uint16_t *original_shadow = 0;
-int my_exit(void)
+int my_exit(uint32_t _unknown)
 {
+    (void)_unknown;
     system_shutdown();
     /* re-enable double buffering */
     if (original_shadow)
@@ -240,7 +238,7 @@ int main()
         fs_fprintf(fd, "text_init() failed (%d)\n", res);
     }
 
-    gDisplayDev->lcdClear();
+    gDisplayDev->clear();
     text_set_font_size(FONT_SIZE_16);
     text_set_font_face(FONT_FACE_SONGTI_BOLD);
     text_set_fg_color(MAKE_RGB565(255, 0, 0));
@@ -258,9 +256,9 @@ int main()
     text_render_centered("Press DOWN to map buttons", 180);
     text_render_centered("Press any other key to continue", 200);
     cache_sync();
-    gDisplayDev->lcdFlip();
+    gDisplayDev->flip();
 
-    key_data_t keys = wait_for_key();
+    ge_key_data_t keys = wait_for_key();
     if (keys.key2 & GE_KEY_DOWN)
         map_buttons(&keymap);
 
