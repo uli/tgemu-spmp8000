@@ -28,15 +28,11 @@
 #include <string.h>
 #include <stdio.h>
 
-#define CHINESE
-
 static uint8_t *asc12_font = 0;
 static uint8_t *asc16_font = 0;
-#ifdef CHINESE
 static uint16_t *hzx12_font = 0;
 static uint16_t *hzx16_font = 0;
 #include "hzktable.c"
-#endif
 
 struct sunplus_font_header {
     uint8_t _pad1[0x10];
@@ -119,7 +115,6 @@ int text_load_fonts(void)
     }
     close(fd);
 
-#ifdef CHINESE
     /* XXX: Don't load these fonts until HZX font face is requested. */
     fd = open("/Rom/mw/fonts/CHINESE/HZX12", O_RDONLY);
     if (!fd) {
@@ -142,7 +137,7 @@ int text_load_fonts(void)
         return -4;
     }
     close(fd);
-#endif
+
     return 0;
 }
 
@@ -154,14 +149,13 @@ void text_free_fonts(void)
     if (asc16_font)
         free(asc16_font);
     asc16_font = 0;
-#ifdef CHINESE
     if (hzx12_font)
         free(hzx12_font);
     hzx12_font = 0;
     if (hzx16_font)
         free(hzx16_font);
     hzx16_font = 0;
-#endif
+
     int i;
     for (i = 0; i < FONT_FACE_MAX; i++) {
         struct sunplus_font *fnt = &sunplus_fonts[i];
@@ -272,7 +266,6 @@ int text_draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, 
             fb += width;
         }
     }
-#ifdef CHINESE
     else {
         for (i = 0; i < font_size; i++) {
             uint16_t line = hzx_font[i];
@@ -284,7 +277,7 @@ int text_draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, 
             fb += width;
         }
     }
-#endif
+
     return char_width;
 }
 
