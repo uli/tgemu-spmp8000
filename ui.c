@@ -177,6 +177,8 @@ static int bit_count(uint32_t val)
 
 void map_buttons(emu_keymap_t *keymap)
 {
+    uint16_t *old_shadow = gDisplayDev->getShadowBuffer();
+    gDisplayDev->setShadowBuffer(gDisplayDev->getFrameBuffer());
     emu_keymap_t save = *keymap;
 restart:
     gDisplayDev->clear();
@@ -200,7 +202,6 @@ restart:
     for (kp = keys; kp->name; kp++, y += 10) {
         text_render(kp->name, 10, y);
         cache_sync();
-        gDisplayDev->flip();
         /* Wait for keypad silence. */
         while (emuIfKeyGetInput(keymap)) {}
         /* Wait for single key press. */
@@ -216,7 +217,6 @@ restart:
     }
     text_render("Press UP to save, DOWN to start over.", 10, y + 20);
     cache_sync();
-    gDisplayDev->flip();
     for (;;) {
         ge_key_data_t keys = wait_for_key();
         if (keys.key2 & GE_KEY_DOWN)
@@ -233,6 +233,7 @@ restart:
             fclose(fp);
         }
     }
+    gDisplayDev->setShadowBuffer(old_shadow);
 }
 
 void load_buttons(emu_keymap_t *keymap)
