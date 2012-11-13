@@ -228,7 +228,7 @@ int text_draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, 
     if ((font_face == FONT_FACE_HZX || font_size == FONT_SIZE_12) && !hzx_double_width) {
         for (i = 0; i < font_size; i++) {
             uint8_t line = asc_font[i];
-            for (j = 0; j < char_width; j++) {
+            for (j = 0; j < char_width && x + j < width; j++) {
                 fb[j] = (line & 0x80) ? 0xffff : 0;
                 line <<= 1;
             }
@@ -240,7 +240,7 @@ int text_draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, 
         for (i = 0; i < font_size; i++) {
             uint16_t line = hzx_font[i];
             line = (line >> 8) | (line << 8);
-            for (j = 0; j < char_width; j++) {
+            for (j = 0; j < char_width && x + j < width; j++) {
                 fb[j] = (line & 0x8000) ? 0xffff : 0;
                 line <<= 1;
             }
