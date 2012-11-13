@@ -380,9 +380,9 @@ int main()
             update_sound();
         }
 
-        if (avg_full + frameskip * avg_skip > 16666 * (frameskip + 1))
+        if (avg_full + frameskip * avg_skip > 16666 * (frameskip + 1) && frameskip < MAX_FRAMESKIP)
             frameskip++;
-        else if (avg_full + frameskip * avg_skip < 16666 * (frameskip + 1) - avg_skip)
+        else if (avg_full + frameskip * avg_skip < 16666 * (frameskip + 1) - avg_skip && frameskip > 0)
             frameskip--;
 
         if (show_timing)
