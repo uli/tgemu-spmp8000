@@ -242,8 +242,13 @@ int main()
 
     gDisplayDev->lcdClear();
     text_set_font_size(FONT_SIZE_16);
+    text_set_font_face(FONT_FACE_SONGTI_BOLD);
+    text_set_fg_color(MAKE_RGB565(255, 0, 0));
+    text_set_bg_color(MAKE_RGB565(255, 255, 255));
     text_render_centered("TGEmu", 32);
     text_set_font_face(FONT_FACE_HZX);
+    text_set_fg_color(MAKE_RGB565(255, 255, 255));
+    text_set_bg_color(MAKE_RGB565(0, 0, 0));
     text_render_centered("NEC PC Engine Emulator", 52);
     text_set_font_face(FONT_FACE_SONGTI);
     text_set_font_size(FONT_SIZE_12);
