@@ -243,8 +243,10 @@ int main()
     gDisplayDev->lcdClear();
     text_set_font_size(FONT_SIZE_16);
     text_render_centered("TGEmu", 32);
-    text_set_font_size(FONT_SIZE_12);
+    text_set_font_face(FONT_FACE_HZX);
     text_render_centered("NEC PC Engine Emulator", 52);
+    text_set_font_face(FONT_FACE_SONGTI);
+    text_set_font_size(FONT_SIZE_12);
     text_render_centered("Original code: Charles MacDonald", 80);
     text_render_centered("SPMP8000 port: Ulrich Hecht", 96);
     text_render_centered("ulrich.hecht@gmail.com", 112);
