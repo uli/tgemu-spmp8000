@@ -47,6 +47,7 @@ struct sunplus_font {
     uint32_t glyph_bytes;
 };
 FILE *songti_font = 0;
+int8_t *songti_width = 0;
 struct sunplus_font sp;
 
 int text_load_fonts(void)
@@ -106,6 +107,14 @@ int text_load_fonts(void)
         songti_font = 0;
         return -6;
     }
+    fd = open("/Rom/mw/fonts/SUNPLUS/SONGTI.WID", O_RDONLY);
+    if (!fd)
+        return -7;
+    fstat(fd, &st);
+    songti_width = malloc(st.st_size);
+    if (!songti_width || read(fd, songti_width, st.st_size) != st.st_size)
+        return -8;
+    close(fd);
 
     return 0;
 }
@@ -128,6 +137,10 @@ void text_free_fonts(void)
 #endif
     if (songti_font)
         fclose(songti_font);
+    songti_font = 0;
+    if (songti_width)
+        free(songti_width);
+    songti_width = 0;
 }
 
 int font_size = FONT_SIZE_12;
@@ -157,28 +170,26 @@ int text_draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, 
 {
     uint16_t *fb = buf + width * y + x;
     int i, j;
-    uint8_t *asc_font;
-    int asc_step;
+    uint8_t *asc_font = 0;
     uint16_t *hzx_font;
     uint16_t sunplus_char[sp.glyph_bytes / 2];
-    int chinese = 0;
+    int hzx_double_width = 0;
+    int char_width;
     
     if (codepoint >= 0x4e00 && codepoint < 0x10000) {
-        /* XXX: Song Ti is a proper unicode font, so we cannot assume that
-           every non-ASCII character is double-width. */
-        chinese = 1;
+        hzx_double_width = 1;
         if (font_size == FONT_SIZE_12 || font_face == FONT_FACE_HZX) {
             /* convert unicode to Big5 codepoint */
             for (i = 0; i < (int)sizeof(hzk2uni) / 2; i++) {
                 if (hzk2uni[i] == codepoint) {
                     codepoint = i;
-                    chinese = 1;
+                    hzx_double_width = 1;
                     break;
                 }
             }
             if (i == sizeof(hzk2uni) / 2) {
                 codepoint = 1;
-                chinese = 0;
+                hzx_double_width = 0;
             }
         }
     }
@@ -186,52 +197,56 @@ int text_draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, 
     switch (font_size) {
         case FONT_SIZE_12:
             asc_font = &asc12_font[codepoint * font_size];
-            asc_step = 1;
             hzx_font = &hzx12_font[codepoint * font_size];
+            if (hzx_double_width)
+                char_width = 16;
+            else
+                char_width = 8;
             break;
         case FONT_SIZE_16:
             if (font_face == FONT_FACE_HZX) {
                 asc_font = &asc16_font[codepoint * font_size];
-                asc_step = 1;
                 hzx_font = &hzx16_font[codepoint * font_size];
+                if (hzx_double_width)
+                    char_width = 16;
+                else
+                    char_width = 8;
             }
             else {
                 fseek(songti_font, (codepoint - sp.glyph_offset) * sp.glyph_bytes + sp.glyph_start, SEEK_SET);
                 fread(sunplus_char, sp.glyph_bytes, 1, songti_font);
-                asc_font = (uint8_t *)sunplus_char;
-                asc_step = 2;
                 hzx_font = (uint16_t *)sunplus_char;
+                char_width = songti_width[codepoint];
             }
             break;
         default:
             return -1;
     }
 
-    if (!chinese) {
+    if ((font_face == FONT_FACE_HZX || font_size == FONT_SIZE_12) && !hzx_double_width) {
         for (i = 0; i < font_size; i++) {
-            uint8_t line = asc_font[i * asc_step];
-            for (j = 0; j < 8; j++) {
+            uint8_t line = asc_font[i];
+            for (j = 0; j < char_width; j++) {
                 fb[j] = (line & 0x80) ? 0xffff : 0;
                 line <<= 1;
             }
             fb += width;
         }
-        return 8;
     }
 #ifdef CHINESE
     else {
         for (i = 0; i < font_size; i++) {
             uint16_t line = hzx_font[i];
             line = (line >> 8) | (line << 8);
-            for (j = 0; j < 16; j++) {
+            for (j = 0; j < char_width; j++) {
                 fb[j] = (line & 0x8000) ? 0xffff : 0;
                 line <<= 1;
             }
             fb += width;
         }
-        return 16;
     }
 #endif
+    return char_width;
 }
 
 int text_render(const char *t, int x, int y)
