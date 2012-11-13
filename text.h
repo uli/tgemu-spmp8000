@@ -5,6 +5,9 @@
 
 #define FONT_FACE_HZX 0
 #define FONT_FACE_SONGTI 1
+#define FONT_FACE_SONGTI_BOLD 2
+#define FONT_FACE_XINSONG 3
+#define FONT_FACE_MAX 4
 
 int text_load_fonts(void);
 void text_free_fonts(void);

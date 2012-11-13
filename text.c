@@ -38,7 +38,7 @@ static uint16_t *hzx16_font = 0;
 #include "hzktable.c"
 #endif
 
-struct sunplus_font {
+struct sunplus_font_header {
     uint8_t _pad1[0x10];
     uint32_t glyph_start;
     uint32_t _pad2;
@@ -46,9 +46,53 @@ struct sunplus_font {
     uint32_t _pad3[2];
     uint32_t glyph_bytes;
 };
-FILE *songti_font = 0;
-int8_t *songti_width = 0;
-struct sunplus_font sp;
+
+#define FP "/Rom/mw/fonts/SUNPLUS/"
+struct sunplus_font {
+    const char *face_name;
+    const char *width_name;
+    int8_t *width;
+    FILE *face;
+    struct sunplus_font_header *header;
+    uint16_t *char_data;
+} sunplus_fonts[] = {
+    [FONT_FACE_SONGTI]      = {FP "SONGTI.FONT", FP "SONGTI.WID", 0, 0, 0, 0},
+    [FONT_FACE_SONGTI_BOLD] = {FP "SONGTI-BOLD.FONT", FP "SONGTI-BOLD.WID", 0, 0, 0, 0},
+    [FONT_FACE_XINSONG]     = {FP "XINSONG.FONT", FP "XINSONG.WID", 0, 0, 0, 0},
+};
+
+static int load_sunplus_font(int font_face)
+{
+    struct sunplus_font *fnt = &sunplus_fonts[font_face];
+    if (fnt->face)
+        return 0;
+    fnt->face = fopen(fnt->face_name, "rb");
+    if (!fnt->face)
+        return -5;
+    fnt->header = malloc(sizeof(struct sunplus_font_header));
+    if (!fnt->header)
+        return -10;
+    if (fread(fnt->header, sizeof(struct sunplus_font_header), 1, fnt->face) != 1) {
+        fclose(fnt->face);
+        fnt->face = 0;
+        return -6;
+    }
+    int fd = open(fnt->width_name, O_RDONLY);
+    if (!fd)
+        return -7;
+    struct stat st;
+    fstat(fd, &st);
+    fnt->width = malloc(st.st_size);
+    if (!fnt->width || read(fd, fnt->width, st.st_size) != st.st_size) {
+        close(fd);
+        return -8;
+    }
+    close(fd);
+    fnt->char_data = malloc(fnt->header->glyph_bytes);
+    if (!fnt->char_data)
+        return -9;
+    return 0;
+}
 
 int text_load_fonts(void)
 {
@@ -99,23 +143,6 @@ int text_load_fonts(void)
     }
     close(fd);
 #endif
-    songti_font = fopen("/Rom/mw/fonts/SUNPLUS/SONGTI.FONT", "r");
-    if (!songti_font)
-        return -5;
-    if (fread(&sp, sizeof(sp), 1, songti_font) != 1) {
-        fclose(songti_font);
-        songti_font = 0;
-        return -6;
-    }
-    fd = open("/Rom/mw/fonts/SUNPLUS/SONGTI.WID", O_RDONLY);
-    if (!fd)
-        return -7;
-    fstat(fd, &st);
-    songti_width = malloc(st.st_size);
-    if (!songti_width || read(fd, songti_width, st.st_size) != st.st_size)
-        return -8;
-    close(fd);
-
     return 0;
 }
 
@@ -135,12 +162,20 @@ void text_free_fonts(void)
         free(hzx16_font);
     hzx16_font = 0;
 #endif
-    if (songti_font)
-        fclose(songti_font);
-    songti_font = 0;
-    if (songti_width)
-        free(songti_width);
-    songti_width = 0;
+    int i;
+    for (i = 0; i < FONT_FACE_MAX; i++) {
+        struct sunplus_font *fnt = &sunplus_fonts[i];
+        if (fnt->face)
+            fclose(fnt->face);
+        fnt->face = 0;
+        if (fnt->width)
+            free(fnt->width);
+        fnt->width = 0;
+        if (fnt->header)
+            free(fnt->header);
+        if (fnt->char_data)
+            free(fnt->char_data);
+    }
 }
 
 int font_size = FONT_SIZE_12;
@@ -172,7 +207,6 @@ int text_draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, 
     int i, j;
     uint8_t *asc_font = 0;
     uint16_t *hzx_font;
-    uint16_t sunplus_char[sp.glyph_bytes / 2];
     int hzx_double_width = 0;
     int char_width;
     
@@ -213,10 +247,13 @@ int text_draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, 
                     char_width = 8;
             }
             else {
-                fseek(songti_font, (codepoint - sp.glyph_offset) * sp.glyph_bytes + sp.glyph_start, SEEK_SET);
-                fread(sunplus_char, sp.glyph_bytes, 1, songti_font);
-                hzx_font = (uint16_t *)sunplus_char;
-                char_width = songti_width[codepoint];
+                load_sunplus_font(font_face);
+                struct sunplus_font *fnt = &sunplus_fonts[font_face];
+                struct sunplus_font_header *sp = fnt->header;
+                fseek(fnt->face, (codepoint - sp->glyph_offset) * sp->glyph_bytes + sp->glyph_start, SEEK_SET);
+                fread(fnt->char_data, sp->glyph_bytes, 1, fnt->face);
+                hzx_font = fnt->char_data;
+                char_width = fnt->width[codepoint];
                 if (char_width < 0)
                     return -1;
             }
