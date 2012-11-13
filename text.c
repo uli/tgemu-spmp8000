@@ -217,6 +217,8 @@ int text_draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, 
                 fread(sunplus_char, sp.glyph_bytes, 1, songti_font);
                 hzx_font = (uint16_t *)sunplus_char;
                 char_width = songti_width[codepoint];
+                if (char_width < 0)
+                    return -1;
             }
             break;
         default:
@@ -295,8 +297,10 @@ int text_render_ex(uint16_t *buf, int width, const char *t, int x, int y)
             codepoint = *text;
             text++;
         }
-        x += text_draw_character_ex(buf, width, codepoint, x, y);
-        if (x >= width - 8)
+        int cw = text_draw_character_ex(buf, width, codepoint, x, y);
+        if (cw > 0)	/* no error */
+            x += cw;
+        if (x >= width)
             break;
     }
     return x - old_x;
