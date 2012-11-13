@@ -28,6 +28,9 @@
 #include <string.h>
 #include <stdio.h>
 
+static uint16_t fg_color = 0xffff;
+static uint16_t bg_color = 0;
+
 static uint8_t *asc12_font = 0;
 static uint8_t *asc16_font = 0;
 static uint16_t *hzx12_font = 0;
@@ -44,7 +47,7 @@ struct sunplus_font_header {
 };
 
 #define FP "/Rom/mw/fonts/SUNPLUS/"
-struct sunplus_font {
+static struct sunplus_font {
     const char *face_name;
     const char *width_name;
     int8_t *width;
@@ -189,6 +192,15 @@ void text_set_font_face(int face)
     font_face = face;
 }
 
+void text_set_fg_color(uint16_t color)
+{
+    fg_color = color;
+}
+void text_set_bg_color(uint16_t color)
+{
+    bg_color = color;
+}
+
 int text_draw_character(uint32_t codepoint, int x, int y)
 {
     return text_draw_character_ex(gDisplayDev->getShadowBuffer(),
@@ -260,7 +272,7 @@ int text_draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, 
         for (i = 0; i < font_size; i++) {
             uint8_t line = asc_font[i];
             for (j = 0; j < char_width && x + j < width; j++) {
-                fb[j] = (line & 0x80) ? 0xffff : 0;
+                fb[j] = (line & 0x80) ? fg_color : bg_color;
                 line <<= 1;
             }
             fb += width;
@@ -271,7 +283,7 @@ int text_draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, 
             uint16_t line = hzx_font[i];
             line = (line >> 8) | (line << 8);
             for (j = 0; j < char_width && x + j < width; j++) {
-                fb[j] = (line & 0x8000) ? 0xffff : 0;
+                fb[j] = (line & 0x8000) ? fg_color : bg_color;
                 line <<= 1;
             }
             fb += width;
