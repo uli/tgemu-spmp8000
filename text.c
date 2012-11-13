@@ -93,52 +93,56 @@ static int load_sunplus_font(int font_face)
     return 0;
 }
 
+static int load_hzx_font(int font_size)
+{
+    int fd;
+    struct stat st;
+    if (font_size == FONT_SIZE_12 && !hzx12_font) {
+        fd = open("/Rom/mw/fonts/CHINESE/HZX12", O_RDONLY);
+        if (!fd) {
+            return -3;
+        }
+        fstat(fd, &st);
+        hzx12_font = malloc(st.st_size);
+        if (!hzx12_font || read(fd, hzx12_font, st.st_size) != st.st_size) {
+            return -4;
+        }
+        close(fd);
+    }
+    else if (font_size == FONT_SIZE_16 && !hzx16_font) {
+        fd = open("/Rom/mw/fonts/CHINESE/HZX16", O_RDONLY);
+        if (!fd) {
+            return -3;
+        }
+        fstat(fd, &st);
+        hzx16_font = malloc(st.st_size);
+        if (!hzx16_font || read(fd, hzx16_font, st.st_size) != st.st_size) {
+            return -4;
+        }
+        close(fd);
+    }
+    return 0;
+}
+
 int text_load_fonts(void)
 {
     int fd = open("/Rom/mw/fonts/CHINESE/ASC12", O_RDONLY);
-    if (!fd) {
+    if (!fd)
         return -1;
-    }
     struct stat st;
     fstat(fd, &st);
     asc12_font = malloc(st.st_size);
-    if (!asc12_font || read(fd, asc12_font, st.st_size) != st.st_size) {
+    if (!asc12_font || read(fd, asc12_font, st.st_size) != st.st_size)
         return -2;
-    }
     close(fd);
 
     fd = open("/Rom/mw/fonts/CHINESE/ASC16", O_RDONLY);
-    if (!fd) {
+    if (!fd)
         return -1;
-    }
     fstat(fd, &st);
     asc16_font = malloc(st.st_size);
-    if (!asc16_font || read(fd, asc16_font, st.st_size) != st.st_size) {
+    if (!asc16_font || read(fd, asc16_font, st.st_size) != st.st_size)
         return -2;
-    }
-    close(fd);
-
-    /* XXX: Don't load these fonts until HZX font face is requested. */
-    fd = open("/Rom/mw/fonts/CHINESE/HZX12", O_RDONLY);
-    if (!fd) {
-        return -3;
-    }
-    fstat(fd, &st);
-    hzx12_font = malloc(st.st_size);
-    if (!hzx12_font || read(fd, hzx12_font, st.st_size) != st.st_size) {
-        return -4;
-    }
-    close(fd);
-
-    fd = open("/Rom/mw/fonts/CHINESE/HZX16", O_RDONLY);
-    if (!fd) {
-        return -3;
-    }
-    fstat(fd, &st);
-    hzx16_font = malloc(st.st_size);
-    if (!hzx16_font || read(fd, hzx16_font, st.st_size) != st.st_size) {
-        return -4;
-    }
     close(fd);
 
     return 0;
@@ -175,8 +179,8 @@ void text_free_fonts(void)
     }
 }
 
-int font_size = FONT_SIZE_12;
-int font_face = FONT_FACE_SONGTI;
+static int font_size = FONT_SIZE_12;
+static int font_face = FONT_FACE_SONGTI;
 
 void text_set_font_size(int fs)
 {
@@ -238,8 +242,10 @@ int text_draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, 
         case FONT_SIZE_12:
             asc_font = &asc12_font[codepoint * font_size];
             hzx_font = &hzx12_font[codepoint * font_size];
-            if (hzx_double_width)
+            if (hzx_double_width) {
+                load_hzx_font(font_size);
                 char_width = 16;
+            }
             else
                 char_width = 8;
             break;
@@ -247,8 +253,10 @@ int text_draw_character_ex(uint16_t *buf, int width, uint32_t codepoint, int x, 
             if (font_face == FONT_FACE_HZX) {
                 asc_font = &asc16_font[codepoint * font_size];
                 hzx_font = &hzx16_font[codepoint * font_size];
-                if (hzx_double_width)
+                if (hzx_double_width) {
+                    load_hzx_font(font_size);
                     char_width = 16;
+                }
                 else
                     char_width = 8;
             }
