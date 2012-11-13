@@ -23,7 +23,7 @@ t_input input;
 t_snd snd;
 
 
-/* Pass 0 for no sound, or 8000-44100 for desired sample rate */
+/* Pass 0 for no sound, or 8000-48000 for desired sample rate */
 /* No error checking at the moment... */
 int system_init(int sample_rate)
 {
@@ -41,7 +41,7 @@ void audio_init(int rate)
     memset(&snd, 0, sizeof(snd));
 
     /* Exit if no sound or invalid sample rate */
-    if(!rate || ((rate < 8000) || (rate > 44100))) return;
+    if(!rate || ((rate < 8000) || (rate > 48000))) return;
     else
     {
         /* Buffer size = sample rate / frames per second */

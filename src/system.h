@@ -54,7 +54,7 @@ typedef struct
 
 typedef struct
 {
-    int sample_rate;    /* Sample rate (8000-44100) */
+    int sample_rate;    /* Sample rate (8000-48000) */
     int enabled;        /* 1= sound emulation is enabled */
     int buffer_size;    /* Size of sound buffer (in bytes) */
     int16 *buffer[2];   /* Signed 16-bit stereo sound data */
