@@ -32,12 +32,6 @@
 #include "pc_engine.h"
 #include "tgemu_logo.h"
 
-#define fs_fprintf(fd, x...) { \
-  char buf[256]; int _res; \
-  sprintf(buf, x); \
-  NativeGE_fsWrite(fd, buf, strlen(buf), &_res); \
-}
-
 #define MAX_FRAMESKIP 8
 #define SHOW_KEYS
 
@@ -185,6 +179,7 @@ int my_exit(uint32_t _unknown)
     dump_profile();
 #endif
     text_free();
+    fclose(stderr);
     return NativeGE_gameExit();
 }
 
@@ -228,7 +223,7 @@ static void bitblit_alpha(int x, int y, uint16_t *data, int w, int h, uint16_t k
 
 int main()
 {
-    int fd, res, i;
+    int res, i;
 
 #ifdef PROFILE
     init_profile();
@@ -236,6 +231,12 @@ int main()
 
     // initialize the game api
     libgame_init();
+
+    FILE *fp;
+    if ((fp = fopen("stderr.txt", "w"))) {
+        stderr = fp;
+        setbuf(fp, NULL);
+    }
 
     g_stEmuAPIs->exit = my_exit;
 
@@ -253,36 +254,35 @@ int main()
     gp.src_clip_w = 256;
     gp.src_clip_h = 240;
 
-    NativeGE_fsOpen("fb.txt", FS_O_CREAT | FS_O_WRONLY | FS_O_TRUNC, &fd);
     res = emuIfGraphInit(&gp);
-    fs_fprintf(fd, "emuIfGraphInit (%08x) returns %08x\n", (uint32_t)emuIfGraphInit, res);
-    fs_fprintf(fd, "Framebuffer %08x, shadow buffer %08x\n",
+    fprintf(stderr, "emuIfGraphInit (%08x) returns %08x\n", (uint32_t)emuIfGraphInit, res);
+    fprintf(stderr, "Framebuffer %08x, shadow buffer %08x\n",
                gDisplayDev->getFrameBuffer(), gDisplayDev->getShadowBuffer());
-    fs_fprintf(fd, "Width %d, Height %d\n", gDisplayDev->getWidth(), gDisplayDev->getHeight());
-    fs_fprintf(fd, "LCD format %08x\n", gDisplayDev->getBuffFormat());
-    fs_fprintf(fd, "ARM frequency %d\n", GetArmCoreFreq());
-    fs_fprintf(fd, "system ID %d\n", libgame_system_id);
+    fprintf(stderr, "Width %d, Height %d\n", gDisplayDev->getWidth(), gDisplayDev->getHeight());
+    fprintf(stderr, "LCD format %08x\n", gDisplayDev->getBuffFormat());
+    fprintf(stderr, "ARM frequency %d\n", GetArmCoreFreq());
+    fprintf(stderr, "system ID %d\n", libgame_system_id);
 
     sp.rate = SOUND_RATE;
     sp.channels = SOUND_CHANNELS;
     sp.depth = 0;	/* 0 seems to mean 16 bits */
     sp.callback = 0;	/* not used for native games, AFAIK */
     res = emuIfSoundInit(&sp);
-    fs_fprintf(fd, "emuIfSoundInit returns %d, sp.rate %d\n", res, sp.rate);
+    fprintf(stderr, "emuIfSoundInit returns %d, sp.rate %d\n", res, sp.rate);
 
     keymap.controller = 0;
     if (emuIfKeyInit(&keymap) < 0) {
-        fs_fprintf(fd, "emuIfKeyInit() failed\n");
-        NativeGE_fsClose(fd);
+        fprintf(stderr, "emuIfKeyInit() failed\n");
+        fclose(stderr);
         return 0;
     }
     for (i = 0; i < 20; i++)
-        fs_fprintf(fd, "key %d scancode %08x\n", i, keymap.scancode[i]);
+        fprintf(stderr, "key %d scancode %08x\n", i, keymap.scancode[i]);
     load_buttons(&keymap);
 
     res = text_init();
     if (res < 0) {
-        fs_fprintf(fd, "text_init() failed (%d)\n", res);
+        fprintf(stderr, "text_init() failed (%d)\n", res);
     }
 
     uint16_t *pc_engine = malloc(200 * 150 * 2);
@@ -335,8 +335,8 @@ int main()
 
     char *romname = 0;
     if ((res = select_file(NULL, "pce|gz|zip", &romname, FONT_SIZE_16)) < 0) {
-        fs_fprintf(fd, "select_file() %d\n", res);
-        NativeGE_fsClose(fd);
+        fprintf(stderr, "select_file() %d\n", res);
+        fclose(stderr);
         return 0;
     }
     
@@ -344,11 +344,11 @@ int main()
     text_set_bg_color(0);
     text_set_font_size(FONT_SIZE_12);
 
-    fs_fprintf(fd, "loading ROM %s\n", romname);
+    fprintf(stderr, "loading ROM %s\n", romname);
     res = load_rom(romname, 0, 0);
     if (res != 1) {
-        fs_fprintf(fd, "failed to load ROM %s: %d\n", romname, res);
-        NativeGE_fsClose(fd);
+        fprintf(stderr, "failed to load ROM %s: %d\n", romname, res);
+        fclose(stderr);
         return 0;
     }
     free(romname);
@@ -366,13 +366,11 @@ int main()
     bitmap.viewport.y = 0x00;
     bitmap.viewport.changed = 0;
 
-    fs_fprintf(fd, "system_init\n");
+    fprintf(stderr, "system_init\n");
     system_init(SOUND_RATE);
-    fs_fprintf(fd, "system_reset\n");
+    fprintf(stderr, "system_reset\n");
     system_reset();
-    fs_fprintf(fd, "snd.enabled %d, buffer size %d\n", snd.enabled, snd.buffer_size);
-    NativeGE_fsClose(fd);
-    // return 0;
+    fprintf(stderr, "snd.enabled %d, buffer size %d\n", snd.enabled, snd.buffer_size);
 
     int frameskip = MAX_FRAMESKIP;
 #ifdef SHOW_KEYS
