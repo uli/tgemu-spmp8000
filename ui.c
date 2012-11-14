@@ -118,7 +118,7 @@ reload_dir:
     for (;;) {
         int i;
         uint16_t *fb = gDisplayDev->getShadowBuffer();
-        memset(fb, 0, screen_width * screen_height * 2);
+        memset(fb, 0xff, screen_width * screen_height * 2);
         for (i = current_top;
              i < current_top + max_entries_displayed && i < current_top + dent_count; i++) {
             if (_ECOS_S_ISDIR(stats[i].st_mode)) {

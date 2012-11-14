@@ -301,6 +301,10 @@ int main()
         NativeGE_fsClose(fd);
         return 0;
     }
+    
+    text_set_fg_color(0xffff);
+    text_set_bg_color(0);
+    text_set_font_size(FONT_SIZE_12);
 
     fs_fprintf(fd, "loading ROM %s\n", romname);
     res = load_rom(romname, 0, 0);
