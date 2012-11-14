@@ -193,8 +193,19 @@ static void bitblit(int x, int y, uint16_t *data, int w, int h)
     int fb_w = gDisplayDev->getWidth();
     uint16_t *fb = gDisplayDev->getShadowBuffer() + x + y * fb_w;
     int i;
+    if (x <= -w || x > fb_w)	/* off screen */
+        return;
+    int bytes = w * 2;
+    if (x < 0) {
+        fb -= x;
+        data -= x;
+        bytes += x * 2;
+    }
+    else if (x + w >= fb_w) {
+        bytes -= (x + w - fb_w) * 2;
+    }
     for (i = 0; i < h; i++) {
-        memcpy(fb, data, w * 2);
+        memcpy(fb, data, bytes);
         fb += fb_w;
         data += w;
     }
@@ -204,9 +215,11 @@ static void bitblit_alpha(int x, int y, uint16_t *data, int w, int h, uint16_t k
     int fb_w = gDisplayDev->getWidth();
     uint16_t *fb = gDisplayDev->getShadowBuffer() + x + y * fb_w;
     int i, j;
+    if (x <= -w || x > fb_w)	/* off screen */
+        return;
     for (i = 0; i < h; i++) {
         for (j = 0; j < w; j++)
-            if (data[j] != key)
+            if (x + j >= 0 && x + j < fb_w && data[j] != key)
                 fb[j] = data[j];
         fb += fb_w;
         data += w;
