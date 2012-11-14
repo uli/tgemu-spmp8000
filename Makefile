@@ -45,3 +45,8 @@ tgemu_logo.rgb: tgemu_logo.png
 	ffmpeg -y -vcodec png -i $< -vf scale=160:90 -vcodec rawvideo -f rawvideo -pix_fmt rgb565 $@
 %.zrgb: %.rgb
 	python -c "import zlib,sys; sys.stdout.write(zlib.compress(sys.stdin.read()))" < $< > $@
+
+version.h: .git/index
+	build_no=`git rev-list HEAD | wc -l | sed -e 's/ *//g' | xargs -n1 printf %d`; \
+	echo "#define BUILD_NO $$build_no" >$@; \
+	echo "#define BUILD_STRING \"Build $$build_no\"" >> $@

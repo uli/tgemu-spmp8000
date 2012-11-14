@@ -32,6 +32,8 @@
 #include "pc_engine.h"
 #include "tgemu_logo.h"
 
+#include "version.h"
+
 #define MAX_FRAMESKIP 8
 #define SHOW_KEYS
 
@@ -306,10 +308,20 @@ int main()
         text_render_centered("Original code: Charles MacDonald", scr_h - 80);
         text_render_centered("SPMP8000 port: Ulrich Hecht", scr_h - 66);
         text_render_centered("ulrich.hecht@gmail.com", scr_h - 52);
-        text_set_fg_color(MAKE_RGB565(255, 0, 0));
+        text_set_fg_color(MAKE_RGB565(0, 150, 0));
         text_render_centered("Press DOWN to map buttons", scr_h - 32);
         text_render_centered("Press any other key to continue", scr_h - 16);
         cache_sync();
+
+        if (engine_pos > scr_w / 2 - 200 / 2)
+            engine_pos -= 2;
+        if (logo_pos < scr_w / 2 - 160 / 2)
+            logo_pos += 2;
+        else {
+            text_set_fg_color(MAKE_RGB565(180, 180, 180));
+            text_render(BUILD_STRING, 0, 0);
+        }
+
         gDisplayDev->flip();
 
         ge_key_data_t keys;
@@ -321,10 +333,6 @@ int main()
         else if (keys.key2)
             break;
 
-        if (engine_pos > scr_w / 2 - 200 / 2)
-            engine_pos -= 2;
-        if (logo_pos < scr_w / 2 - 160 / 2)
-            logo_pos += 2;
     }
 
     free(pc_engine);
