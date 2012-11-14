@@ -3,7 +3,7 @@ PROFILE=0
 
 TARGET	= tgemu
 
-OBJS	= game.o text.o ui.o \
+OBJS	= game.o ui.o \
   src/fileio.o \
   src/pce.o \
   src/psg.o \

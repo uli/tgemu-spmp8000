@@ -26,7 +26,7 @@
 #include "shared.h"
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "text.h"
+#include <text.h>
 #include "ui.h"
 
 #define fs_fprintf(fd, x...) { \
