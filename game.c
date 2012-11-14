@@ -285,28 +285,43 @@ int main()
         fs_fprintf(fd, "text_init() failed (%d)\n", res);
     }
 
-    gDisplayDev->clear();
-    int scr_w = gDisplayDev->getWidth();
-    int scr_h = gDisplayDev->getHeight();
-    memset(gDisplayDev->getShadowBuffer(), 0xff, scr_w * scr_h * 2);
-    bitblit(scr_w / 2 - 200 / 2, scr_h / 3 - 150 / 2, (uint16_t *)pc_engine_data, 200, 150);
-    bitblit_alpha(scr_w / 2 - 160 / 2, 8, (uint16_t *)tgemu_logo_data, 160, 90, 0xffff);
-    text_set_font_face(FONT_FACE_SONGTI);
-    text_set_font_size(FONT_SIZE_12);
+    int engine_pos = gDisplayDev->getWidth();
+    int logo_pos = -180;
+    for (;;) {
+        gDisplayDev->clear();
+        int scr_w = gDisplayDev->getWidth();
+        int scr_h = gDisplayDev->getHeight();
+        memset(gDisplayDev->getShadowBuffer(), 0xff, scr_w * scr_h * 2);
+        bitblit(engine_pos, scr_h / 3 - 150 / 2, (uint16_t *)pc_engine_data, 200, 150);
+        bitblit_alpha(logo_pos, 8, (uint16_t *)tgemu_logo_data, 160, 90, 0xffff);
+        text_set_font_size(FONT_SIZE_12);
+        text_set_fg_color(0);
+        text_set_bg_color(0xffff);
+        text_render_centered("Original code: Charles MacDonald", scr_h - 80);
+        text_render_centered("SPMP8000 port: Ulrich Hecht", scr_h - 66);
+        text_render_centered("ulrich.hecht@gmail.com", scr_h - 52);
+        text_set_fg_color(MAKE_RGB565(255, 0, 0));
+        text_render_centered("Press DOWN to map buttons", scr_h - 32);
+        text_render_centered("Press any other key to continue", scr_h - 16);
+        cache_sync();
+        gDisplayDev->flip();
+
+        ge_key_data_t keys;
+        NativeGE_getKeyInput4Ntv(&keys);
+        if (keys.key2 & GE_KEY_DOWN) {
+            map_buttons(&keymap);
+            break;
+        }
+        else if (keys.key2)
+            break;
+
+        if (engine_pos > scr_w / 2 - 200 / 2)
+            engine_pos -= 2;
+        if (logo_pos < scr_w / 2 - 160 / 2)
+            logo_pos += 2;
+    }
     text_set_fg_color(0);
     text_set_bg_color(0xffff);
-    text_render_centered("Original code: Charles MacDonald", scr_h - 80);
-    text_render_centered("SPMP8000 port: Ulrich Hecht", scr_h - 66);
-    text_render_centered("ulrich.hecht@gmail.com", scr_h - 52);
-    text_set_fg_color(MAKE_RGB565(255, 0, 0));
-    text_render_centered("Press DOWN to map buttons", scr_h - 32);
-    text_render_centered("Press any other key to continue", scr_h - 16);
-    cache_sync();
-    gDisplayDev->flip();
-
-    ge_key_data_t keys = wait_for_key();
-    if (keys.key2 & GE_KEY_DOWN)
-        map_buttons(&keymap);
 
     char *romname = 0;
     if ((res = select_file(NULL, "pce|gz|zip", &romname, FONT_SIZE_16)) < 0) {
