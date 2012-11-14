@@ -29,6 +29,9 @@
 #include <text.h>
 #include "ui.h"
 
+#include "pc_engine.h"
+#include "tgemu_logo.h"
+
 #define fs_fprintf(fd, x...) { \
   char buf[256]; int _res; \
   sprintf(buf, x); \
@@ -185,6 +188,31 @@ int my_exit(uint32_t _unknown)
     return NativeGE_gameExit();
 }
 
+static void bitblit(int x, int y, uint16_t *data, int w, int h)
+{
+    int fb_w = gDisplayDev->getWidth();
+    uint16_t *fb = gDisplayDev->getShadowBuffer() + x + y * fb_w;
+    int i;
+    for (i = 0; i < h; i++) {
+        memcpy(fb, data, w * 2);
+        fb += fb_w;
+        data += w;
+    }
+}
+static void bitblit_alpha(int x, int y, uint16_t *data, int w, int h, uint16_t key)
+{
+    int fb_w = gDisplayDev->getWidth();
+    uint16_t *fb = gDisplayDev->getShadowBuffer() + x + y * fb_w;
+    int i, j;
+    for (i = 0; i < h; i++) {
+        for (j = 0; j < w; j++)
+            if (data[j] != key)
+                fb[j] = data[j];
+        fb += fb_w;
+        data += w;
+    }
+}
+
 int main()
 {
     int fd, res, i;
@@ -245,22 +273,21 @@ int main()
     }
 
     gDisplayDev->clear();
-    text_set_font_size(FONT_SIZE_16);
-    text_set_font_face(FONT_FACE_SONGTI);
-    text_set_fg_color(MAKE_RGB565(255, 0, 0));
-    text_set_bg_color(MAKE_RGB565(255, 255, 255));
-    text_render_centered("TGEmu", 32);
-    text_set_font_face(FONT_FACE_HZX);
-    text_set_fg_color(MAKE_RGB565(255, 255, 255));
-    text_set_bg_color(MAKE_RGB565(0, 0, 0));
-    text_render_centered("NEC PC Engine Emulator", 52);
+    int scr_w = gDisplayDev->getWidth();
+    int scr_h = gDisplayDev->getHeight();
+    memset(gDisplayDev->getShadowBuffer(), 0xff, scr_w * scr_h * 2);
+    bitblit(scr_w / 2 - 200 / 2, scr_h / 3 - 150 / 2, (uint16_t *)pc_engine_data, 200, 150);
+    bitblit_alpha(scr_w / 2 - 160 / 2, 8, (uint16_t *)tgemu_logo_data, 160, 90, 0xffff);
     text_set_font_face(FONT_FACE_SONGTI);
     text_set_font_size(FONT_SIZE_12);
-    text_render_centered("Original code: Charles MacDonald", 80);
-    text_render_centered("SPMP8000 port: Ulrich Hecht", 96);
-    text_render_centered("ulrich.hecht@gmail.com", 112);
-    text_render_centered("Press DOWN to map buttons", 180);
-    text_render_centered("Press any other key to continue", 200);
+    text_set_fg_color(0);
+    text_set_bg_color(0xffff);
+    text_render_centered("Original code: Charles MacDonald", scr_h - 80);
+    text_render_centered("SPMP8000 port: Ulrich Hecht", scr_h - 66);
+    text_render_centered("ulrich.hecht@gmail.com", scr_h - 52);
+    text_set_fg_color(MAKE_RGB565(255, 0, 0));
+    text_render_centered("Press DOWN to map buttons", scr_h - 32);
+    text_render_centered("Press any other key to continue", scr_h - 16);
     cache_sync();
     gDisplayDev->flip();
 
