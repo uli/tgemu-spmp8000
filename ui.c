@@ -180,8 +180,11 @@ void map_buttons(emu_keymap_t *keymap)
     uint16_t *old_shadow = gDisplayDev->getShadowBuffer();
     gDisplayDev->setShadowBuffer(gDisplayDev->getFrameBuffer());
     emu_keymap_t save = *keymap;
+    text_set_fg_color(0);
+    text_set_bg_color(0xffff);
 restart:
     gDisplayDev->clear();
+    memset(gDisplayDev->getShadowBuffer(), 0xff, gDisplayDev->getWidth() * gDisplayDev->getHeight() * 2);
     text_render("Press button for: (DOWN to skip)", 10, 10);
     struct {
         char *name;
