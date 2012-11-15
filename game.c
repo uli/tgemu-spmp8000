@@ -319,7 +319,7 @@ int main()
             logo_pos += 2;
         else {
             text_set_fg_color(MAKE_RGB565(180, 180, 180));
-            text_render(BUILD_STRING, 0, 0);
+            text_render("r" BUILD_STRING, 0, 0);
         }
 
         gDisplayDev->flip();
