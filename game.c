@@ -177,6 +177,9 @@ int my_exit(uint32_t _unknown)
     /* re-enable double buffering */
     if (original_shadow)
         gDisplayDev->setShadowBuffer(original_shadow);
+    emuIfGraphCleanup();
+    emuIfSoundCleanup(&sp);
+    emuIfKeyCleanup(&keymap);
 #ifdef PROFILE
     dump_profile();
 #endif
