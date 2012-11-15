@@ -398,7 +398,7 @@ int main()
     gDisplayDev->setShadowBuffer(gDisplayDev->getFrameBuffer());
 
     while (1) {
-        uint32_t start_time = libgame_utime();
+        uint64_t start_time = libgame_utime();
         update_input();
 
         system_frame(0);
