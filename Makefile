@@ -53,4 +53,4 @@ version.h: .git/index
 	build_no=`git rev-list HEAD | wc -l | sed -e 's/ *//g' | xargs -n1 printf %d`.`git show HEAD|head -n1|cut -c8-11`; \
 	echo "#define BUILD_STRING \"$$build_no\"" > $@
 
-EXTRA_CLEAN = version.h *.zrgb *.rgb pc_engine.[ch] tgemu_logo.c[ch]
+EXTRA_CLEAN = version.h *.zrgb *.rgb pc_engine.[ch] tgemu_logo.[ch]
