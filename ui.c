@@ -33,14 +33,14 @@ ge_key_data_t wait_for_key(void)
     ge_key_data_t keys;
     NativeGE_getKeyInput4Ntv(&keys);
     uint32_t last_press_tick = NativeGE_getTime();
-    while (auto_repeat && keys.key2 == okeys.key2 && NativeGE_getTime() < last_press_tick + 100) {
+    while (auto_repeat && keys.keys == okeys.keys && NativeGE_getTime() < last_press_tick + 100) {
         NativeGE_getKeyInput4Ntv(&keys);
     }
-    if (auto_repeat && keys.key2 == okeys.key2)
+    if (auto_repeat && keys.keys == okeys.keys)
         return keys;
     auto_repeat = 0;
     last_press_tick = NativeGE_getTime();
-    while (keys.key2 && keys.key2 == okeys.key2) {
+    while (keys.keys && keys.keys == okeys.keys) {
         NativeGE_getKeyInput4Ntv(&keys);
         if (NativeGE_getTime() > last_press_tick + 500) {
             auto_repeat = 1;
@@ -49,7 +49,7 @@ ge_key_data_t wait_for_key(void)
         }
     }
     okeys = keys;
-    while (okeys.key2 == keys.key2) {
+    while (okeys.keys == keys.keys) {
         NativeGE_getKeyInput4Ntv(&keys);
     }
     okeys = keys;
@@ -134,17 +134,17 @@ reload_dir:
         cache_sync();
         gDisplayDev->flip();
         ge_key_data_t keys = wait_for_key();
-        if ((keys.key2 & GE_KEY_UP) && current_entry > 0) {
+        if ((keys.keys & GE_KEY_UP) && current_entry > 0) {
             current_entry--;
             if (current_entry < current_top)
                 current_top--;
         }
-        else if ((keys.key2 & GE_KEY_DOWN) && current_entry < dent_count - 1) {
+        else if ((keys.keys & GE_KEY_DOWN) && current_entry < dent_count - 1) {
             current_entry++;
             if ((current_entry - current_top + 1) * font_size > screen_height)
                 current_top++;
         }
-        else if (keys.key2 & GE_KEY_O) {
+        else if (keys.keys & GE_KEY_O) {
             if (_ECOS_S_ISDIR(stats[current_entry].st_mode)) {
                 _ecos_chdir(dents[current_entry].d_name);
                 goto reload_dir;
@@ -222,9 +222,9 @@ restart:
     cache_sync();
     for (;;) {
         ge_key_data_t keys = wait_for_key();
-        if (keys.key2 & GE_KEY_DOWN)
+        if (keys.keys & GE_KEY_DOWN)
             goto restart;
-        else if (keys.key2 & GE_KEY_UP)
+        else if (keys.keys & GE_KEY_UP)
             break;
     }
     if (memcmp(keymap, &save, sizeof(emu_keymap_t))) {

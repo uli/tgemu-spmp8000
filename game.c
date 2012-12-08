@@ -178,7 +178,7 @@ int my_exit(uint32_t _unknown)
     if (original_shadow)
         gDisplayDev->setShadowBuffer(original_shadow);
     emuIfGraphCleanup();
-    emuIfSoundCleanup(&sp);
+    emuIfSoundCleanup();
     emuIfKeyCleanup(&keymap);
 #ifdef PROFILE
     dump_profile();
@@ -253,7 +253,7 @@ int main()
     gp.pixels = malloc((BMWIDTH + VISIBLEWIDTH / 4) * 256 * 2);
     gp.width = BMWIDTH;
     gp.height = 256;
-    gp.unknown_flag = 0;
+    gp.has_palette = 0;
     gp.src_clip_x = 0x20;
     gp.src_clip_y = 0;
     gp.src_clip_w = 256;
@@ -290,11 +290,11 @@ int main()
         fprintf(stderr, "text_init() failed (%d)\n", res);
     }
 
-    uint16_t *pc_engine = malloc(200 * 150 * 2);
-    uint16_t *tgemu_logo = malloc(160 * 90 * 2);
+    uint16_t *pc_engine_unc = malloc(200 * 150 * 2);
+    uint16_t *tgemu_logo_unc = malloc(160 * 90 * 2);
     uLongf size = 200 * 150 * 2;
-    uncompress((Bytef *)pc_engine, &size, (Bytef *)pc_engine_data, PC_ENGINE_LENGTH);
-    uncompress((Bytef *)tgemu_logo, &size, (Bytef *)tgemu_logo_data, TGEMU_LOGO_LENGTH);
+    uncompress((Bytef *)pc_engine_unc, &size, (Bytef *)pc_engine, PC_ENGINE_LENGTH);
+    uncompress((Bytef *)tgemu_logo_unc, &size, (Bytef *)tgemu_logo, TGEMU_LOGO_LENGTH);
 
     int engine_pos = gDisplayDev->getWidth();
     int logo_pos = -180;
@@ -303,8 +303,8 @@ int main()
         int scr_w = gDisplayDev->getWidth();
         int scr_h = gDisplayDev->getHeight();
         memset(gDisplayDev->getShadowBuffer(), 0xff, scr_w * scr_h * 2);
-        bitblit(engine_pos, scr_h / 3 - 150 / 2, (uint16_t *)pc_engine, 200, 150);
-        bitblit_alpha(logo_pos, 8, (uint16_t *)tgemu_logo, 160, 90, 0xffff);
+        bitblit(engine_pos, scr_h / 3 - 150 / 2, (uint16_t *)pc_engine_unc, 200, 150);
+        bitblit_alpha(logo_pos, 8, (uint16_t *)tgemu_logo_unc, 160, 90, 0xffff);
         text_set_font_size(FONT_SIZE_12);
         text_set_fg_color(0);
         text_set_bg_color(0xffff);
@@ -329,17 +329,17 @@ int main()
 
         ge_key_data_t keys;
         NativeGE_getKeyInput4Ntv(&keys);
-        if (keys.key2 & GE_KEY_DOWN) {
+        if (keys.keys & GE_KEY_DOWN) {
             map_buttons(&keymap);
             break;
         }
-        else if (keys.key2)
+        else if (keys.keys)
             break;
 
     }
 
-    free(pc_engine);
-    free(tgemu_logo);
+    free(pc_engine_unc);
+    free(tgemu_logo_unc);
 
     text_set_fg_color(0);
     text_set_bg_color(0xffff);

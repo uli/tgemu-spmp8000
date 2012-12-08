@@ -18,7 +18,7 @@ ifeq ($(PROFILE),1)
 OBJS += profile.o
 endif
 
-LIBS	= -lgame -lz -lc -lgcc
+LIBS	= -lz
 
 include $(LIBSPMP8K)/main.cfg
 include $(LIBGAME)/libgame.mk
